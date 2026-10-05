@@ -37,7 +37,7 @@ Before every new upload, raise `versionCode` (and `versionName`) in `app/build.g
    production access is granted.
 2. Create app → name "Modern Media Player", default language, App, Free.
 3. **App content** section:
-   - Privacy policy URL: publish `PRIVACY_POLICY.md` somewhere public (see below).
+   - Privacy policy URL: https://sites.google.com/view/modernmediaplayer
    - Ads: **No ads**.
    - App access: **All functionality available without special access**.
    - Content rating questionnaire: category *Utility/Productivity*; answer No to violence, etc.
