@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Media3 dims the whole video (60% black) while controls show and puts a solid bar behind
+         the time row. Keep the video visible: only a light tint, no bar. -->
+    <color name="exo_black_opacity_60">#26000000</color>
+    <color name="exo_bottom_bar_background">#00000000</color>
+
+    <!-- Player screen: black, no title bar, edge to edge. (The app theme is the splash theme,
+         which shows a window title when an Activity does not install the splash screen.) -->
+    <style name="Theme.ModernMediaPlayer.Player" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

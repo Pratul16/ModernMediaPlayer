@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mm_window_background">#05050C</color>
+
+    <!-- Launch screen: animated neon ring around the play mark (Android 12+; static icon before). -->
+    <style name="Theme.ModernMediaPlayer.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/mm_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.ModernMediaPlayer</item>
+    </style>
+
+    <style name="Theme.ModernMediaPlayer" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/mm_window_background</item>
+    </style>
+</resources>

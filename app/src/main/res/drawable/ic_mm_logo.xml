@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- In-app logo: the launcher mark on its own, transparent background. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <group android:translateX="-26" android:translateY="-26">
+        <path
+            android:fillAlpha="0.28"
+            android:fillColor="#FF8B5CF6"
+            android:pathData="M35,37L35,71L64,54Z"
+            android:strokeAlpha="0.28"
+            android:strokeColor="#FF8B5CF6"
+            android:strokeLineJoin="round"
+            android:strokeWidth="9" />
+        <path
+            android:pathData="M44,36L44,72L75,54Z"
+            android:strokeLineJoin="round"
+            android:strokeWidth="10">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:endX="80"
+                    android:endY="76"
+                    android:startX="39"
+                    android:startY="31"
+                    android:type="linear">
+                    <item android:color="#FFC4B5FD" android:offset="0" />
+                    <item android:color="#FF8B5CF6" android:offset="0.45" />
+                    <item android:color="#FF22D3EE" android:offset="1" />
+                </gradient>
+            </aapt:attr>
+            <aapt:attr name="android:strokeColor">
+                <gradient
+                    android:endX="80"
+                    android:endY="76"
+                    android:startX="39"
+                    android:startY="31"
+                    android:type="linear">
+                    <item android:color="#FFC4B5FD" android:offset="0" />
+                    <item android:color="#FF8B5CF6" android:offset="0.45" />
+                    <item android:color="#FF22D3EE" android:offset="1" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+</vector>

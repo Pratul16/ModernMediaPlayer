@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hidden folders are only shared with this app's own player (the provider isn't exported). -->
+<paths>
+    <files-path name="vault" path="vault/" />
+</paths>

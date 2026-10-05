@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launch animation (Android 12+ splash screen):
+     a neon arc chases once around the play button while it pops in, then the arc fades away.
+     Total ~1 s. Content stays inside the splash icon's visible circle (18..90). -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+
+            <!-- Faint track the arc runs along. -->
+            <path
+                android:name="track"
+                android:pathData="M54,24a30,30 0,1 1,0 60a30,30 0,1 1,0 -60"
+                android:strokeAlpha="0"
+                android:strokeColor="#FF8B5CF6"
+                android:strokeWidth="2" />
+
+            <!-- The chasing neon arc. -->
+            <group
+                android:name="spinner"
+                android:pivotX="54"
+                android:pivotY="54">
+                <path
+                    android:name="arc"
+                    android:pathData="M54,24a30,30 0,1 1,0 60a30,30 0,1 1,0 -60"
+                    android:strokeLineCap="round"
+                    android:strokeWidth="4"
+                    android:trimPathEnd="0"
+                    android:trimPathStart="0">
+                    <aapt:attr name="android:strokeColor">
+                        <gradient
+                            android:endX="84"
+                            android:endY="84"
+                            android:startX="24"
+                            android:startY="24"
+                            android:type="linear">
+                            <item android:color="#FFC4B5FD" android:offset="0" />
+                            <item android:color="#FF8B5CF6" android:offset="0.5" />
+                            <item android:color="#FF22D3EE" android:offset="1" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+            </group>
+
+            <!-- Play button. -->
+            <group
+                android:name="play"
+                android:pivotX="57"
+                android:pivotY="54"
+                android:scaleX="0.4"
+                android:scaleY="0.4">
+                <path
+                    android:name="echo"
+                    android:fillAlpha="0.28"
+                    android:fillColor="#FF8B5CF6"
+                    android:pathData="M42,42L42,66L62,54Z"
+                    android:strokeAlpha="0.28"
+                    android:strokeColor="#FF8B5CF6"
+                    android:strokeLineJoin="round"
+                    android:strokeWidth="6" />
+                <path
+                    android:name="triangle"
+                    android:pathData="M48,41L48,67L70,54Z"
+                    android:strokeLineJoin="round"
+                    android:strokeWidth="7">
+                    <aapt:attr name="android:fillColor">
+                        <gradient
+                            android:endX="73"
+                            android:endY="70"
+                            android:startX="45"
+                            android:startY="38"
+                            android:type="linear">
+                            <item android:color="#FFC4B5FD" android:offset="0" />
+                            <item android:color="#FF8B5CF6" android:offset="0.45" />
+                            <item android:color="#FF22D3EE" android:offset="1" />
+                        </gradient>
+                    </aapt:attr>
+                    <aapt:attr name="android:strokeColor">
+                        <gradient
+                            android:endX="73"
+                            android:endY="70"
+                            android:startX="45"
+                            android:startY="38"
+                            android:type="linear">
+                            <item android:color="#FFC4B5FD" android:offset="0" />
+                            <item android:color="#FF8B5CF6" android:offset="0.45" />
+                            <item android:color="#FF22D3EE" android:offset="1" />
+                        </gradient>
+                    </aapt:attr>
+                </path>
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!-- Arc: draws itself around (head), then the tail catches up, while the ring rotates. -->
+    <target android:name="arc">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="650"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="trimPathEnd"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="550"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="trimPathStart"
+                    android:startOffset="400"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <target android:name="spinner">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="950"
+                android:interpolator="@android:interpolator/fast_out_slow_in"
+                android:propertyName="rotation"
+                android:valueFrom="-90"
+                android:valueTo="270"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+    <!-- Faint track fades in, then out with the arc. -->
+    <target android:name="track">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="300"
+                    android:propertyName="strokeAlpha"
+                    android:valueFrom="0"
+                    android:valueTo="0.22"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="450"
+                    android:propertyName="strokeAlpha"
+                    android:startOffset="250"
+                    android:valueFrom="0.22"
+                    android:valueTo="0"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- Play button pops in with a little overshoot. -->
+    <target android:name="play">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="550"
+                    android:interpolator="@android:anim/overshoot_interpolator"
+                    android:propertyName="scaleX"
+                    android:startOffset="150"
+                    android:valueFrom="0.4"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="550"
+                    android:interpolator="@android:anim/overshoot_interpolator"
+                    android:propertyName="scaleY"
+                    android:startOffset="150"
+                    android:valueFrom="0.4"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

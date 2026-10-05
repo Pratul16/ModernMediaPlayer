@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Transparent: the play mark sits directly on the wallpaper. -->
+<color xmlns:android="http://schemas.android.com/apk/res/android" android:color="@android:color/transparent" />

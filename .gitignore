@@ -1,0 +1,19 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+keystore.properties
+
+# Play Store upload key: never commit
+*.jks
+*.keystore
+# Local test output
+/build/shots/
+/dist/

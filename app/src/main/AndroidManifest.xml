@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Android 13+ (API 33): granular media permissions. Videos and audio are requested separately. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Android 14+ (API 34): lets the user grant access to selected videos only ("partial access"). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <!-- Android 10–12: legacy read permission. -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 10 only: file management uses the legacy File API (requestLegacyExternalStorage).
+         Android 11+ uses MediaStore write/delete requests instead, which need no permission. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+
+    <!-- Keeps the CPU awake while playing with the screen off (both engines). -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Background playback: a foreground service of type mediaPlayback (Android 14+ requires the typed permission). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <application
+        android:name=".ModernMediaApp"
+        android:allowBackup="true"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ModernMediaPlayer.Starting">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Video player. Own task so picture-in-picture does not drag the library along. -->
+        <activity
+            android:name=".player.PlayerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:theme="@style/Theme.ModernMediaPlayer.Player"
+            android:taskAffinity="com.pratul.mmplayer.player">
+            <!-- "Open with" for local video/audio files from file managers and other apps. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="video/*" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/ogg" />
+                <data android:mimeType="application/x-ogg" />
+                <data android:mimeType="application/mp4" />
+                <data android:mimeType="application/x-matroska" />
+                <data android:mimeType="application/vnd.rn-realmedia" />
+                <data android:mimeType="application/vnd.rn-realmedia-vbr" />
+                <data android:mimeType="application/x-flac" />
+            </intent-filter>
+        </activity>
+        <!-- Serves hidden-folder files to the app's own player only. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.vault"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/vault_paths" />
+        </provider>
+
+        <!-- Keeps audio playing after the player closes; media notification and lock-screen controls. -->
+        <service
+            android:name=".player.service.PlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

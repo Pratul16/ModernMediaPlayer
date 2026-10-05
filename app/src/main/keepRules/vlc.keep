@@ -1,0 +1,6 @@
+# libVLC ships no consumer rules. Its native code looks up Java classes, fields and callbacks
+# (events, media tracks, AWindow surfaces) by name through JNI, so nothing in it may be renamed or removed.
+-keep class org.videolan.libvlc.** { *; }
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
