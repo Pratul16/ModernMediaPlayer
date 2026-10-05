@@ -200,7 +200,7 @@ fun SettingsCategoryScreen(
             }
             when (category.extra) {
                 CategoryExtra.CODECS -> CodecSection()
-                CategoryExtra.ABOUT -> AboutSection()
+                CategoryExtra.ABOUT -> AboutDeveloperSection()
                 CategoryExtra.THEMES -> ThemePicker(settings.colorTheme) { viewModel.set(SettingKeys.COLOR_THEME, it.name) }
                 CategoryExtra.SECURITY -> AppLockSection()
                 null -> Unit
@@ -442,29 +442,6 @@ private fun CodecRow(entry: CodecEntry) {
             )
         },
     )
-}
-
-@Composable
-private fun AboutSection() {
-    val context = LocalContext.current
-    val version = remember {
-        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "Unknown"
-    }
-    ListItem(headlineContent = { Text("Version") }, supportingContent = { Text(version) }, colors = clearListItem())
-    ListItem(
-        colors = clearListItem(),
-        headlineContent = { Text("Privacy") },
-        supportingContent = { Text("Modern Media Player works offline. Your media and history never leave this device.") },
-    )
-    SectionTitle("Open-source licenses")
-    listOf(
-        "AndroidX, Jetpack Compose, Media3, Room" to "Apache License 2.0",
-        "FFmpeg (Media3 decoder extension, Jellyfin build)" to "GNU LGPL 2.1+",
-        "libVLC" to "GNU LGPL 2.1+",
-        "Coil" to "Apache License 2.0",
-    ).forEach { (name, license) ->
-        ListItem(headlineContent = { Text(name) }, supportingContent = { Text(license) }, colors = clearListItem())
-    }
 }
 
 @Composable

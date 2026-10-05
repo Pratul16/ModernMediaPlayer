@@ -43,8 +43,10 @@ Before every new upload, raise `versionCode` (and `versionName`) in `app/build.g
    - Content rating questionnaire: category *Utility/Productivity*; answer No to violence, etc.
      The app plays the user's own files and has no user-generated content sharing.
    - Target audience: 18+ (or 13+); not designed for children.
-   - Data safety: **No data collected, no data shared**. The app has no internet permission.
-     Biometrics are processed by Android only.
+   - Data safety: **No data collected, no data shared** (answer it the same way as for
+     Expenses Manager). The internet permission is used only by Google Play Billing for tips;
+     purchases are processed by Google. Biometrics are processed by Android only.
+   - In-app products: the app offers optional tips, so the listing shows "In-app purchases".
    - Foreground service declaration (media playback): "Continues audio/video playback when
      the user leaves the player; shows media controls in the notification." Attach a short
      screen recording of background audio playing with the notification.
@@ -79,10 +81,26 @@ separate *public* repo containing only `PRIVACY_POLICY.md` (the code repo can st
 > • Hidden folders: hidden videos disappear from the gallery and every other app
 > • Optional app lock with fingerprint, face or an app PIN
 > • Five colour themes including Glass, light and dark modes
-> • Private: no ads, no accounts, no internet permission — nothing leaves your phone
+> • Private: no ads, no accounts, no tracking — your media never leaves your phone
 
 ## 5. Open-source licences
 
 The app bundles libVLC (LGPL-2.1+) and FFmpeg decoders (LGPL). LGPL allows use in closed apps as
 long as the libraries are dynamically linked (they are) and their licences are credited in the app
 (Settings → About lists them).
+
+## 6. Tips ("Buy me a coffee")
+
+In Play Console → Monetize → In-app products, create three **one-time, consumable** products with
+exactly these IDs (the same as Expenses Manager), then activate them:
+
+| Product ID | Name | Suggested price |
+|---|---|---|
+| `tip_coffee` | ☕ Coffee | ₹49 / $0.99 |
+| `tip_coffee_cake` | 🍰 Coffee & cake | ₹149 / $2.99 |
+| `tip_big_thanks` | 🎉 Big thanks | ₹399 / $6.99 |
+
+In-app products can only be created after a signed `.aab` with the billing library has been
+uploaded to any testing track. Until they exist, the About page says tips are only available in
+the Play Store version. To show a privacy policy link on the About page, put its public URL in
+`privacy_policy_url` in `app/src/main/res/values/strings.xml`.

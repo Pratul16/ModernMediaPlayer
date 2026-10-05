@@ -5,7 +5,7 @@ A local video and music player for Android (Kotlin, Jetpack Compose, Media3, lib
 - Plays almost any format: ExoPlayer (hardware) → FFmpeg (software) → VLC fallback
 - Gestures, background audio, picture-in-picture, subtitles, playlists, smart resume and series
 - Built-in file actions, multi-select, hidden folders, optional app lock
-- No internet permission: nothing leaves the device
+- Private: no ads, no tracking; media and history never leave the device
 
 ## Build
 

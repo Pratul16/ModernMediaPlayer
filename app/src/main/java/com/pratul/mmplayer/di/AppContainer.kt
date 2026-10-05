@@ -10,6 +10,7 @@ import com.pratul.mmplayer.player.service.PlaybackHolder
 import com.pratul.mmplayer.media.files.FileOperations
 import com.pratul.mmplayer.security.AppLock
 import com.pratul.mmplayer.media.vault.Vault
+import com.pratul.mmplayer.billing.TipJar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,4 +44,7 @@ class AppContainer(context: Context) {
     val appLock: AppLock = AppLock(appContext)
 
     val vault: Vault by lazy { Vault(appContext) }
+
+    /** "Buy me a coffee" tips through Google Play (About & developer page). */
+    val tipJar: TipJar by lazy { TipJar(appContext) }
 }

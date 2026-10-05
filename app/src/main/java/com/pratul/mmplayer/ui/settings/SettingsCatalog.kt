@@ -318,8 +318,8 @@ object SettingsCatalog {
         ),
         SettingCategory(
             id = "about",
-            title = "About",
-            description = "Version, privacy and open-source licenses",
+            title = "About & developer",
+            description = "Version, contact, feedback and licenses",
             icon = Icons.Rounded.Info,
             items = emptyList(),
             extra = CategoryExtra.ABOUT,

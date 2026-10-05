@@ -8,7 +8,13 @@ explains what the app accesses and what it does with it.
 ## Summary
 
 **The app does not collect, store on any server, share or sell any personal data.** It has no
-internet permission, no accounts, no ads and no analytics. Everything stays on your device.
+accounts, no ads and no analytics, and never uploads your media, history or settings. Everything
+stays on your device.
+
+The only network use is the optional "Buy me a coffee" tip on the About page, which is handled
+entirely by Google Play Billing under
+[Google's privacy policy](https://policies.google.com/privacy). The app never sees your payment
+details.
 
 ## What the app accesses on your device
 
@@ -39,4 +45,4 @@ Any change to this policy will be published at this address with a new date.
 
 ## Contact
 
-Questions: ppratulgupta@gmail.com
+Questions: pratulkhandelwal16@gmail.com

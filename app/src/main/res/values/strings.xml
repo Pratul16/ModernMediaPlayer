@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Modern Media Player</string>
+
+    <!-- About & developer page. Empty values hide their row. -->
+    <string name="developer_name" translatable="false">Pratul</string>
+    <string name="developer_email" translatable="false">pratulkhandelwal16@gmail.com</string>
+    <string name="developer_tagline" translatable="false">Independent developer. Built Modern Media Player to play everything on your phone beautifully, privately and without ads.</string>
+    <!-- Public page with PRIVACY_POLICY.md (required by Play Store); fill in once it's hosted. -->
+    <string name="privacy_policy_url" translatable="false"></string>
 </resources>
