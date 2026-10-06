@@ -82,12 +82,22 @@ separate *public* repo containing only `PRIVACY_POLICY.md` (the code repo can st
 > • Optional app lock with fingerprint, face or an app PIN
 > • Five colour themes including Glass, light and dark modes
 > • Private: no ads, no accounts, no tracking — your media never leaves your phone
+> • Open source (GPL-3.0): github.com/Pratul16/ModernMediaPlayer
 
 ## 5. Open-source licences
 
-The app bundles libVLC (LGPL-2.1+) and FFmpeg decoders (LGPL). LGPL allows use in closed apps as
-long as the libraries are dynamically linked (they are) and their licences are credited in the app
-(Settings → About lists them).
+The app is free software under **GPL-3.0** (see `LICENSE`), because it bundles the Jellyfin FFmpeg
+decoder for Media3, which is GPL-3.0. libVLC (LGPL-2.1+) and the Apache-2.0 libraries are compatible.
+
+To stay compliant:
+- Keep the GitHub repository **public**, and for every version you publish, push the exact source
+  it was built from (tag it, e.g. `git tag v1.0.1 && git push --tags`).
+- Keep the "Source code" link in Settings → About & developer, and mention the licence in the store
+  description (see the last line of the draft above).
+- Never commit `upload-key.jks` or `keystore.properties`; GPL doesn't require sharing signing keys
+  for an app distributed on its own.
+- Selling, tips and in-app purchases are all allowed under GPL. Anyone may also build and share the
+  app themselves, but only you can publish updates to your Play listing.
 
 ## 6. Tips ("Buy me a coffee")
 

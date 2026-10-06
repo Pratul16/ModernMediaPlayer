@@ -7,4 +7,6 @@
     <string name="developer_tagline" translatable="false">Independent developer. Built Modern Media Player to play everything on your phone beautifully, privately and without ads.</string>
     <!-- Public copy of PRIVACY_POLICY.md (required by Play Store). -->
     <string name="privacy_policy_url" translatable="false">https://sites.google.com/view/modernmediaplayer</string>
+    <!-- Public repository with the full source (GPL-3.0 requires offering it). -->
+    <string name="source_code_url" translatable="false">https://github.com/Pratul16/ModernMediaPlayer</string>
 </resources>

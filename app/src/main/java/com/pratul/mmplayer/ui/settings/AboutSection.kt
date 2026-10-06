@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material3.HorizontalDivider
@@ -64,6 +65,7 @@ fun AboutDeveloperSection() {
     val email = stringResource(R.string.developer_email)
     val tagline = stringResource(R.string.developer_tagline)
     val privacyUrl = stringResource(R.string.privacy_policy_url)
+    val sourceUrl = stringResource(R.string.source_code_url)
     val appName = stringResource(R.string.app_name)
 
     Column(
@@ -127,6 +129,12 @@ fun AboutDeveloperSection() {
                     openLink(context, privacyUrl)
                 }
             }
+            if (sourceUrl.isNotBlank()) {
+                HorizontalDivider(Modifier.padding(start = 72.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                LinkRow(Icons.Rounded.Code, "Source code", "Free software under the GNU GPL v3") {
+                    openLink(context, sourceUrl)
+                }
+            }
         }
 
         Column(
@@ -136,10 +144,18 @@ fun AboutDeveloperSection() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Open-source licenses", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text("License", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Text(
+                "$appName © 2026 $developer. Free software: you can redistribute and modify it under the " +
+                    "GNU General Public License v3 (or later). It comes with no warranty.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text("Open-source components", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             listOf(
                 "AndroidX, Jetpack Compose, Media3, Room" to "Apache License 2.0",
-                "FFmpeg (Media3 decoder extension, Jellyfin build)" to "GNU LGPL 2.1+",
+                "FFmpeg decoder for Media3 (Jellyfin build)" to "GNU GPL v3",
                 "libVLC" to "GNU LGPL 2.1+",
                 "Coil" to "Apache License 2.0",
                 "Material icons" to "Apache License 2.0",
