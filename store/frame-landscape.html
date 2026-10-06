@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- Play Store landscape screenshot, 1920x1080: a caption above a phone screenshot.
+     Usage: frame.html?img=shot-themes.png&title=...&sub=...  (render at --window-size=1920,1080) -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(700px 600px at 0% 0%, rgba(139, 92, 246, 0.55), transparent 70%),
+      radial-gradient(700px 600px at 100% 100%, rgba(34, 211, 238, 0.30), transparent 70%),
+      #05050C;
+    font-family: "Segoe UI", system-ui, sans-serif; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 {
+    margin: 60px 60px 0; font-size: 64px; line-height: 1.05; font-weight: 800; letter-spacing: -2px; text-align: center;
+    background: linear-gradient(100deg, #C4B5FD 0%, #8B5CF6 45%, #22D3EE 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p { margin: 14px 80px 0; font-size: 30px; font-weight: 500; color: rgba(255, 255, 255, 0.82); text-align: center; }
+  .phone {
+    margin-top: 44px; width: 1500px; border-radius: 48px; padding: 12px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06));
+    box-shadow: 0 40px 120px rgba(139, 92, 246, 0.45), 0 0 0 2px rgba(255, 255, 255, 0.12);
+  }
+  .phone img { display: block; width: 100%; border-radius: 38px; }
+</style></head><body>
+  <h1 id="t"></h1>
+  <p id="s"></p>
+  <div class="phone"><img id="i" alt=""></div>
+  <script>
+    const q = new URLSearchParams(location.search);
+    document.getElementById('t').textContent = q.get('title') || '';
+    document.getElementById('s').textContent = q.get('sub') || '';
+    document.getElementById('i').src = q.get('img');
+  </script>
+</body></html>
