@@ -1,5 +1,6 @@
 package com.pratul.mmplayer.data.repository
 
+import android.database.sqlite.SQLiteConstraintException
 import com.pratul.mmplayer.data.database.dao.FavoriteDao
 import com.pratul.mmplayer.data.database.dao.MediaDao
 import com.pratul.mmplayer.data.database.dao.PlaybackHistoryDao
@@ -53,7 +54,11 @@ class MediaRepository(
 
     suspend fun setFavorite(mediaId: Long, favorite: Boolean) {
         if (favorite) {
-            favoriteDao.insert(FavoriteEntity(mediaId, System.currentTimeMillis()))
+            try {
+                favoriteDao.insert(FavoriteEntity(mediaId, System.currentTimeMillis()))
+            } catch (e: SQLiteConstraintException) {
+                // The file was deleted from the phone a moment ago.
+            }
         } else {
             favoriteDao.delete(mediaId)
         }

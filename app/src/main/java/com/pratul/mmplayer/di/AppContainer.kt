@@ -1,6 +1,7 @@
 package com.pratul.mmplayer.di
 
 import android.content.Context
+import android.util.Log
 import com.pratul.mmplayer.data.database.ModernMediaDatabase
 import com.pratul.mmplayer.data.repository.MediaRepository
 import com.pratul.mmplayer.data.repository.PlaylistRepository
@@ -11,6 +12,7 @@ import com.pratul.mmplayer.media.files.FileOperations
 import com.pratul.mmplayer.security.AppLock
 import com.pratul.mmplayer.media.vault.Vault
 import com.pratul.mmplayer.billing.TipJar
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,8 +24,14 @@ import kotlinx.coroutines.SupervisorJob
 class AppContainer(context: Context) {
     val appContext: Context = context.applicationContext
 
-    /** Lives as long as the process; for work that must outlive any one screen (e.g. scanning). */
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /**
+     * Lives as long as the process; for work that must outlive any one screen (e.g. scanning).
+     * A failure in one background job is logged instead of closing the whole app.
+     */
+    val appScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default +
+            CoroutineExceptionHandler { _, e -> Log.e("ModernMediaPlayer", "Background task failed", e) },
+    )
 
     val database: ModernMediaDatabase by lazy { ModernMediaDatabase.create(appContext) }
 

@@ -2,6 +2,7 @@
 
 package com.pratul.mmplayer.player
 
+import android.database.sqlite.SQLiteConstraintException
 import android.app.Application
 import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
@@ -369,7 +370,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         )
         countedPlay = true
         history = entity
-        container.appScope.launch { historyDao.upsert(entity) }
+        container.appScope.launch {
+            try {
+                historyDao.upsert(entity)
+            } catch (e: SQLiteConstraintException) {
+                // The file was deleted (and dropped from the library) while it was open; nothing to remember.
+            }
+        }
     }
 
     /** The choice to remember for a track type: language, else label, else nothing. */

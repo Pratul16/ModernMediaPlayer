@@ -1,5 +1,6 @@
 package com.pratul.mmplayer.data.repository
 
+import android.database.sqlite.SQLiteConstraintException
 import com.pratul.mmplayer.data.database.dao.PlaylistDao
 import com.pratul.mmplayer.data.database.entity.PlaylistEntity
 import com.pratul.mmplayer.data.database.entity.PlaylistItemEntity
@@ -66,7 +67,12 @@ class PlaylistRepository(private val playlistDao: PlaylistDao) {
         if (fresh.isEmpty()) return 0
         val start = playlistDao.lastPosition(playlistId) + 1
         val now = System.currentTimeMillis()
-        playlistDao.insertItems(fresh.mapIndexed { i, id -> PlaylistItemEntity(playlistId = playlistId, mediaId = id, position = start + i, addedAt = now) })
+        try {
+            playlistDao.insertItems(fresh.mapIndexed { i, id -> PlaylistItemEntity(playlistId = playlistId, mediaId = id, position = start + i, addedAt = now) })
+        } catch (e: SQLiteConstraintException) {
+            // A file was deleted from the phone a moment ago (or the playlist was removed).
+            return 0
+        }
         playlistDao.touch(playlistId, now)
         return fresh.size
     }
