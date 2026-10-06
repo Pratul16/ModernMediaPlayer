@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: same launch screen, plus "Made with ♥ by Pratul" along the bottom. -->
+    <style name="Theme.ModernMediaPlayer.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/mm_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.ModernMediaPlayer</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/splash_branding</item>
+    </style>
+</resources>

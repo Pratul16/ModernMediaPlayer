@@ -1,0 +1,20 @@
+<!doctype html>
+<!-- Launch-screen branding "Made with ♥ by Pratul", 800x320 (200x80dp at 4x), transparent.
+     Render: chrome --headless --default-background-color=00000000 --window-size=800,320
+     Output goes to app/src/main/res/drawable-xxxhdpi/splash_branding.png -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 800px; height: 320px; overflow: hidden; background: transparent; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Segoe UI", system-ui, sans-serif; font-size: 60px; font-weight: 600;
+    color: rgba(255, 255, 255, 0.72); letter-spacing: 0.5px;
+  }
+  .heart { color: #F472B6; margin: 0 16px; font-size: 64px; }
+  .name {
+    margin-left: 16px; font-weight: 800;
+    background: linear-gradient(100deg, #C4B5FD 0%, #8B5CF6 50%, #22D3EE 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+</style></head><body>
+  Made with<span class="heart">&#9829;</span>by<span class="name">Pratul</span>
+</body></html>
