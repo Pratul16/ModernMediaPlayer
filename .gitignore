@@ -17,3 +17,6 @@ keystore.properties
 # Local test output
 /build/shots/
 /dist/
+
+# Screen recordings for Play declarations (raw ones may show personal content)
+/store/video/
