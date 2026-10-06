@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- Play Store icon, 512x512. Render: msedge --headless --screenshot --window-size=512,512 -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 512px; height: 512px; overflow: hidden; background: #05050C; }
+</style></head><body>
+<svg width="512" height="512" viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glowA" cx="18" cy="14" r="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="96" cy="98" r="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="58" cy="54" r="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="play" x1="39" y1="31" x2="80" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C4B5FD"/>
+      <stop offset="0.45" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <rect width="108" height="108" fill="#05050C"/>
+  <rect width="108" height="108" fill="url(#glowA)"/>
+  <rect width="108" height="108" fill="url(#glowB)"/>
+  <rect width="108" height="108" fill="url(#halo)"/>
+  <!-- Same mark as the launcher icon, nudged to optical centre -->
+  <g transform="translate(-1.5 0)">
+    <path d="M35,37L35,71L64,54Z" fill="#8B5CF6" fill-opacity="0.28" stroke="#8B5CF6" stroke-opacity="0.28" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M44,36L44,72L75,54Z" fill="url(#play)" stroke="url(#play)" stroke-width="10" stroke-linejoin="round"/>
+  </g>
+</svg>
+</body></html>

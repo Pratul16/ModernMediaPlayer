@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Play Store feature graphic, 1024x500. Render: msedge --headless --screenshot --window-size=1024,500 -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; width: 1024px; height: 500px; overflow: hidden; }
+  body {
+    background:
+      radial-gradient(520px 420px at 8% 0%, rgba(139, 92, 246, 0.55), transparent 70%),
+      radial-gradient(520px 420px at 100% 100%, rgba(34, 211, 238, 0.32), transparent 70%),
+      radial-gradient(420px 300px at 62% 40%, rgba(244, 114, 182, 0.14), transparent 70%),
+      #05050C;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #fff;
+    display: flex; align-items: center;
+  }
+  .mark { width: 330px; height: 330px; margin-left: 56px; flex: none; filter: drop-shadow(0 0 40px rgba(139, 92, 246, 0.55)); }
+  .text { margin-left: 28px; }
+  h1 {
+    margin: 0; font-size: 70px; line-height: 1.02; font-weight: 800; letter-spacing: -2px;
+    background: linear-gradient(100deg, #C4B5FD 0%, #8B5CF6 45%, #22D3EE 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p { margin: 18px 0 0; font-size: 27px; font-weight: 600; color: rgba(255, 255, 255, 0.86); letter-spacing: -0.3px; }
+  .chips { margin-top: 26px; display: flex; gap: 8px; flex-wrap: nowrap; }
+  .chip {
+    font-size: 16px; font-weight: 600; padding: 7px 14px; white-space: nowrap; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.9);
+  }
+</style></head><body>
+  <svg class="mark" viewBox="22 22 64 64" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="play" x1="39" y1="31" x2="80" y2="76" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#C4B5FD"/>
+        <stop offset="0.45" stop-color="#8B5CF6"/>
+        <stop offset="1" stop-color="#22D3EE"/>
+      </linearGradient>
+    </defs>
+    <path d="M35,37L35,71L64,54Z" fill="#8B5CF6" fill-opacity="0.28" stroke="#8B5CF6" stroke-opacity="0.28" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M44,36L44,72L75,54Z" fill="url(#play)" stroke="url(#play)" stroke-width="10" stroke-linejoin="round"/>
+  </svg>
+  <div class="text">
+    <h1>Modern Media<br>Player</h1>
+    <p>Plays almost any video &amp; music. Beautifully.</p>
+    <div class="chips">
+      <span class="chip">Smart gestures</span>
+      <span class="chip">Up to 3× speed</span>
+      <span class="chip">Hidden folders</span>
+      <span class="chip">No ads</span>
+    </div>
+  </div>
+</body></html>
