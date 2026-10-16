@@ -17,6 +17,8 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.pratul.mmplayer.ui.components.SupportDialog
+import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.ui.semantics.Role
 import com.pratul.mmplayer.ui.theme.Aurora
 import com.pratul.mmplayer.ui.theme.GlassIconButton
@@ -136,6 +138,7 @@ fun HomeScreen(
 
     var selectedTab by rememberSaveable { mutableStateOf(HomeTab.VIDEOS) }
     var sheetMedia by remember { mutableStateOf<MediaFile?>(null) }
+    var showSupport by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var creatingFolder by remember { mutableStateOf(false) }
     val openFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -152,7 +155,12 @@ fun HomeScreen(
         contentPadding = PaddingValues(bottom = 24.dp),
     ) {
         item(key = "header") {
-            HomeHeader(onOpenSearch = onOpenSearch, onOpenSettings = onOpenSettings, onRescan = onScan)
+            HomeHeader(
+                onOpenSearch = onOpenSearch,
+                onOpenSettings = onOpenSettings,
+                onRescan = onScan,
+                onOpenSupport = { showSupport = true }
+            )
         }
         item(key = "search") { SearchPill(onClick = onOpenSearch) }
         if (mediaAccess.access != MediaAccess.FULL) {
@@ -214,11 +222,19 @@ fun HomeScreen(
             },
         )
     }
+    if (showSupport) {
+        SupportDialog(onDismiss = { showSupport = false })
+    }
 }
 
 /** Greeting header: logo, time-of-day greeting, gradient app name and two glass actions. */
 @Composable
-private fun HomeHeader(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit, onRescan: () -> Unit) {
+private fun HomeHeader(
+    onOpenSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onRescan: () -> Unit,
+    onOpenSupport: () -> Unit,
+) {
     var menuOpen by remember { mutableStateOf(false) }
     val greeting = remember {
         when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
@@ -248,6 +264,14 @@ private fun HomeHeader(onOpenSearch: () -> Unit, onOpenSettings: () -> Unit, onR
         Box {
             GlassIconButton(Icons.Rounded.Tune, contentDescription = "More options", onClick = { menuOpen = true })
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text("Support / Buy Coffee ☕") },
+                    leadingIcon = { Icon(Icons.Rounded.Coffee, contentDescription = null) },
+                    onClick = {
+                        menuOpen = false
+                        onOpenSupport()
+                    },
+                )
                 DropdownMenuItem(
                     text = { Text("Rescan media") },
                     leadingIcon = { Icon(Icons.Rounded.Sync, contentDescription = null) },

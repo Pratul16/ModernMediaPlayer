@@ -269,12 +269,12 @@ private fun FloatingNavBar(
                     Icon(
                         imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                         contentDescription = null,
-                        tint = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp),
                     )
                     if (selected) {
                         Spacer(Modifier.width(8.dp))
-                        Text(destination.label, color = Color.White, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                        Text(destination.label, color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge, maxLines = 1)
                     }
                 }
             }

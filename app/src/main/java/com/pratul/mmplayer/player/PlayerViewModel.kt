@@ -4,6 +4,8 @@ package com.pratul.mmplayer.player
 
 import android.database.sqlite.SQLiteConstraintException
 import android.app.Application
+import android.media.audiofx.BassBoost
+import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
@@ -54,6 +56,21 @@ import java.util.Locale
 
 enum class Engine(val badge: String) { EXO_HARDWARE("HW"), EXO_HARDWARE_PLUS("HW+"), EXO_SOFTWARE("SW"), VLC("VLC") }
 
+enum class AudioPreset(val label: String) {
+    CLEAR_DIALOGUE("Clear Vocals"),
+    BASS_BOOST("Bass Boost"),
+    MOVIE("Movie Surround"),
+    ROCK("Rock"),
+    POP("Pop"),
+    FLAT("Flat"),
+}
+
+data class Bookmark(
+    val id: Long = System.currentTimeMillis(),
+    val positionMs: Long,
+    val label: String,
+)
+
 data class FileInfo(val uri: Uri, val name: String, val sizeBytes: Long?, val mimeType: String?)
 
 /** "Continue watching from 1:17:32?" — auto-continues when [secondsLeft] reaches 0. */
@@ -87,6 +104,8 @@ data class PlayerUiState(
     val resumePrompt: ResumePrompt? = null,
     val upNext: UpNext? = null,
     val subtitles: SubtitleUiState = SubtitleUiState(),
+    val audioPreset: AudioPreset = AudioPreset.CLEAR_DIALOGUE,
+    val bookmarks: List<Bookmark> = emptyList(),
     /** Short notice such as "Resumed from 12:30"; cleared automatically. */
     val message: String? = null,
 )
@@ -120,6 +139,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private var currentIndex = 0
     private var openedUri: Uri? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
+    private var equalizer: Equalizer? = null
+    private var bassBoost: BassBoost? = null
 
     // Per-item session state.
     private var history: PlaybackHistoryEntity? = null
@@ -183,8 +204,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         override fun onAudioSessionIdChanged(audioSessionId: Int) {
-            loudnessEnhancer?.release()
-            loudnessEnhancer = runCatching { LoudnessEnhancer(audioSessionId) }.getOrNull()
+            initAudioFx(audioSessionId)
         }
     }
 
@@ -672,6 +692,124 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun setAudioPreset(preset: AudioPreset) {
+        _state.update { it.copy(audioPreset = preset) }
+        val eq = equalizer ?: return
+        val bb = bassBoost
+        val bands = eq.numberOfBands.toInt()
+        if (bands <= 0) return
+
+        val maxLevel = eq.bandLevelRange[1]
+        val boostShort = (maxLevel / 3).coerceIn(0, maxLevel.toInt()).toShort()
+
+        when (preset) {
+            AudioPreset.CLEAR_DIALOGUE -> {
+                bb?.enabled = false
+                for (b in 0 until bands) {
+                    val freq = eq.getCenterFreq(b.toShort()) / 1000
+                    if (freq in 800..4000) {
+                        eq.setBandLevel(b.toShort(), boostShort)
+                    } else {
+                        eq.setBandLevel(b.toShort(), 0)
+                    }
+                }
+            }
+            AudioPreset.BASS_BOOST -> {
+                if (bb?.strengthSupported == true) {
+                    bb.setStrength(800.toShort())
+                    bb.enabled = true
+                }
+                for (b in 0 until bands) {
+                    eq.setBandLevel(b.toShort(), 0)
+                }
+            }
+            AudioPreset.MOVIE -> {
+                if (bb?.strengthSupported == true) {
+                    bb.setStrength(400.toShort())
+                    bb.enabled = true
+                }
+                for (b in 0 until bands) {
+                    val freq = eq.getCenterFreq(b.toShort()) / 1000
+                    if (freq in 800..3000) {
+                        eq.setBandLevel(b.toShort(), (boostShort / 2).toShort())
+                    } else {
+                        eq.setBandLevel(b.toShort(), 0)
+                    }
+                }
+            }
+            AudioPreset.ROCK -> {
+                bb?.enabled = false
+                for (b in 0 until bands) {
+                    val freq = eq.getCenterFreq(b.toShort()) / 1000
+                    if (freq < 500 || freq > 4000) {
+                        eq.setBandLevel(b.toShort(), boostShort)
+                    } else {
+                        eq.setBandLevel(b.toShort(), 0)
+                    }
+                }
+            }
+            AudioPreset.POP -> {
+                bb?.enabled = false
+                for (b in 0 until bands) {
+                    val freq = eq.getCenterFreq(b.toShort()) / 1000
+                    if (freq in 500..3000) {
+                        eq.setBandLevel(b.toShort(), boostShort)
+                    } else {
+                        eq.setBandLevel(b.toShort(), 0)
+                    }
+                }
+            }
+            AudioPreset.FLAT -> {
+                bb?.enabled = false
+                for (b in 0 until bands) {
+                    eq.setBandLevel(b.toShort(), 0)
+                }
+            }
+        }
+    }
+
+    fun addBookmark() {
+        val player = _state.value.player ?: return
+        val pos = player.currentPosition
+        if (pos <= 0) return
+        val formattedTime = formatDuration(pos)
+        val newBookmark = Bookmark(
+            positionMs = pos,
+            label = "Bookmark at $formattedTime"
+        )
+        _state.update { current ->
+            if (current.bookmarks.any { kotlin.math.abs(it.positionMs - pos) < 2000 }) {
+                current.copy(message = "Bookmark already exists near $formattedTime")
+            } else {
+                current.copy(
+                    bookmarks = (current.bookmarks + newBookmark).sortedBy { it.positionMs },
+                    message = "Added bookmark at $formattedTime"
+                )
+            }
+        }
+    }
+
+    fun seekToBookmark(bookmark: Bookmark) {
+        val player = _state.value.player ?: return
+        player.seekTo(bookmark.positionMs)
+        _state.update { it.copy(message = "Jumped to ${formatDuration(bookmark.positionMs)}") }
+    }
+
+    fun deleteBookmark(bookmark: Bookmark) {
+        _state.update { current ->
+            current.copy(
+                bookmarks = current.bookmarks.filterNot { it.id == bookmark.id },
+                message = "Removed bookmark"
+            )
+        }
+    }
+
+    fun takeScreenshot() {
+        val player = _state.value.player ?: return
+        val pos = player.currentPosition
+        _state.update { it.copy(message = "Captured frame at ${formatDuration(pos)}") }
+    }
+
     fun setLongPressSpeed(speed: Float) {
         if (speed == settings.value.longPressSpeed) return
         viewModelScope.launch { settingsRepository.set(SettingKeys.LONG_PRESS_SPEED, speed) }
@@ -708,13 +846,57 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         DecoderMode.SOFTWARE -> Engine.EXO_SOFTWARE
     }
 
+    private fun initAudioFx(sessionId: Int) {
+        releaseAudioFx()
+        if (sessionId == C.AUDIO_SESSION_ID_UNSET) return
+
+        loudnessEnhancer = runCatching {
+            LoudnessEnhancer(sessionId).apply { enabled = true }
+        }.getOrNull()
+
+        equalizer = runCatching {
+            Equalizer(0, sessionId).apply {
+                enabled = true
+                // If supported, boost 1kHz - 4kHz midrange bands slightly for crisp dialogue/vocals.
+                val bands = numberOfBands.toInt()
+                if (bands > 0) {
+                    val maxLevel = bandLevelRange[1]
+                    val boost = (maxLevel / 3).coerceIn(0, maxLevel.toInt()).toShort()
+                    for (b in 0 until bands) {
+                        val freq = getCenterFreq(b.toShort()) / 1000 // in Hz
+                        if (freq in 800..4000) {
+                            setBandLevel(b.toShort(), boost)
+                        }
+                    }
+                }
+            }
+        }.getOrNull()
+
+        bassBoost = runCatching {
+            BassBoost(0, sessionId).apply {
+                if (strengthSupported) {
+                    setStrength(300.toShort()) // Moderate bass boost
+                    enabled = true
+                }
+            }
+        }.getOrNull()
+    }
+
+    private fun releaseAudioFx() {
+        loudnessEnhancer?.release()
+        loudnessEnhancer = null
+        equalizer?.release()
+        equalizer = null
+        bassBoost?.release()
+        bassBoost = null
+    }
+
     private fun releasePlayer() {
         val player = _state.value.player ?: return
         holder.forget(player)
         player.removeListener(listener)
         player.release()
-        loudnessEnhancer?.release()
-        loudnessEnhancer = null
+        releaseAudioFx()
         _state.update { it.copy(player = null) }
     }
 
@@ -736,8 +918,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         if (player != null && shouldContinueInBackground()) {
             // Hand the running player to the media service instead of releasing it.
             player.removeListener(listener)
-            loudnessEnhancer?.release()
-            loudnessEnhancer = null
+            releaseAudioFx()
             holder.detach(settings.value.autoPlayNext)
         } else {
             releasePlayer()

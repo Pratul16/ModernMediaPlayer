@@ -27,31 +27,30 @@ val LocalPalette = staticCompositionLocalOf { paletteFor(ColorTheme.AURORA) }
 
 fun paletteFor(theme: ColorTheme): Palette = when (theme) {
     ColorTheme.AURORA -> Palette(
-        gradient = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1), Color(0xFF22D3EE)),
-        glowA = Color(0xFF8B5CF6), glowB = Color(0xFF22D3EE), glowC = Color(0xFFF472B6),
-        darkBackground = Color(0xFF05050C), lightBackground = Color(0xFFF5F3FF),
+        gradient = listOf(Color(0xFF635BFF), Color(0xFF4F46E5), Color(0xFF3B82F6)),
+        glowA = Color(0xFF635BFF), glowB = Color(0xFF38BDF8), glowC = Color(0xFF818CF8),
+        darkBackground = Color(0xFF0F1015), lightBackground = Color(0xFFF9FAFB),
     )
-    // Apple-style "liquid glass": pastel light, near-black dark, iOS system blue → purple.
     ColorTheme.GLASS -> Palette(
-        gradient = listOf(Color(0xFF0A84FF), Color(0xFF5E5CE6), Color(0xFFBF5AF2)),
-        glowA = Color(0xFF64D2FF), glowB = Color(0xFFFF9F0A), glowC = Color(0xFFBF5AF2),
-        darkBackground = Color(0xFF000000), lightBackground = Color(0xFFF2F2F7),
-        frost = 1.7f,
+        gradient = listOf(Color(0xFF0A84FF), Color(0xFF5E5CE6), Color(0xFF007AFF)),
+        glowA = Color(0xFF0A84FF), glowB = Color(0xFF5E5CE6), glowC = Color(0xFF007AFF),
+        darkBackground = Color(0xFF101015), lightBackground = Color(0xFFF2F2F7),
+        frost = 1.0f,
     )
     ColorTheme.SUNSET -> Palette(
-        gradient = listOf(Color(0xFFFB923C), Color(0xFFEC4899), Color(0xFF8B5CF6)),
-        glowA = Color(0xFFF97316), glowB = Color(0xFFEC4899), glowC = Color(0xFF8B5CF6),
-        darkBackground = Color(0xFF0C0608), lightBackground = Color(0xFFFFF5F0),
+        gradient = listOf(Color(0xFFEA580C), Color(0xFFDC2626), Color(0xFFE11D48)),
+        glowA = Color(0xFFEA580C), glowB = Color(0xFFDC2626), glowC = Color(0xFFE11D48),
+        darkBackground = Color(0xFF140E10), lightBackground = Color(0xFFFFF5F0),
     )
     ColorTheme.OCEAN -> Palette(
-        gradient = listOf(Color(0xFF22D3EE), Color(0xFF3B82F6), Color(0xFF6366F1)),
-        glowA = Color(0xFF0EA5E9), glowB = Color(0xFF6366F1), glowC = Color(0xFF2DD4BF),
-        darkBackground = Color(0xFF020810), lightBackground = Color(0xFFF0F7FF),
+        gradient = listOf(Color(0xFF0284C7), Color(0xFF2563EB), Color(0xFF1D4ED8)),
+        glowA = Color(0xFF0284C7), glowB = Color(0xFF2563EB), glowC = Color(0xFF1D4ED8),
+        darkBackground = Color(0xFF0C131A), lightBackground = Color(0xFFF0F7FF),
     )
     ColorTheme.EMERALD -> Palette(
-        gradient = listOf(Color(0xFF34D399), Color(0xFF14B8A6), Color(0xFFA3E635)),
-        glowA = Color(0xFF10B981), glowB = Color(0xFF84CC16), glowC = Color(0xFF14B8A6),
-        darkBackground = Color(0xFF030A07), lightBackground = Color(0xFFF1FBF5),
+        gradient = listOf(Color(0xFF059669), Color(0xFF0D9488), Color(0xFF10B981)),
+        glowA = Color(0xFF059669), glowB = Color(0xFF0D9488), glowC = Color(0xFF10B981),
+        darkBackground = Color(0xFF0A120E), lightBackground = Color(0xFFF1FBF5),
     )
 }
 

@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.text.Cue
+import com.pratul.mmplayer.player.AudioPreset
+import com.pratul.mmplayer.player.Bookmark
 import com.pratul.mmplayer.player.ResumePrompt
 import com.pratul.mmplayer.player.SubtitleUiState
 import com.pratul.mmplayer.player.UpNext
@@ -47,6 +49,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,13 +58,21 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkAdd
 import androidx.compose.material.icons.rounded.Brightness6
+import androidx.compose.material.icons.rounded.Camera
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
 import androidx.compose.material.icons.rounded.Lock
@@ -581,7 +592,7 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
     }
 
     if (showOptions) {
-        PlayerOptionsSheet(
+        PlayerRightSidePanel(
             state = state,
             settings = settings,
             tracks = tracks,
@@ -609,6 +620,11 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
             onClearExternalSubtitle = viewModel::clearExternalSubtitle,
             onLoadSubtitleFile = { subtitlePicker.launch(arrayOf("*/*")) },
             onSubtitleDelay = viewModel::setSubtitleDelay,
+            onAudioPreset = viewModel::setAudioPreset,
+            onAddBookmark = viewModel::addBookmark,
+            onSeekBookmark = viewModel::seekToBookmark,
+            onDeleteBookmark = viewModel::deleteBookmark,
+            onTakeScreenshot = viewModel::takeScreenshot,
         )
     }
 
@@ -665,7 +681,7 @@ private fun FeedbackPill(feedback: Feedback, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PlayerOptionsSheet(
+private fun PlayerRightSidePanel(
     state: PlayerUiState,
     settings: AppSettings,
     tracks: Tracks,
@@ -681,26 +697,99 @@ private fun PlayerOptionsSheet(
     onClearExternalSubtitle: () -> Unit,
     onLoadSubtitleFile: () -> Unit,
     onSubtitleDelay: (Long) -> Unit,
+    onAudioPreset: (AudioPreset) -> Unit,
+    onAddBookmark: () -> Unit,
+    onSeekBookmark: (Bookmark) -> Unit,
+    onDeleteBookmark: (Bookmark) -> Unit,
+    onTakeScreenshot: () -> Unit,
 ) {
     val player = state.player
-    // Translucent and without a scrim, so the video stays visible while choosing options.
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = Color.Black.copy(alpha = 0.6f),
-        contentColor = Color.White,
-        scrimColor = Color.Transparent,
-        tonalElevation = 0.dp,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(onClick = onDismiss)
+            .background(Color.Black.copy(alpha = 0.45f)),
+        contentAlignment = Alignment.CenterEnd,
     ) {
         Column(
-            Modifier
+            modifier = Modifier
+                .fillMaxHeight()
+                .widthIn(max = 340.dp)
+                .fillMaxWidth(0.85f)
+                .clickable(enabled = false, onClick = {})
+                .background(Color(0xFF12121A).copy(alpha = 0.96f))
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Options & Controls",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+                IconButton(onClick = onDismiss) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                }
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                IconButton(onClick = onTakeScreenshot) {
+                    Icon(Icons.Rounded.Camera, contentDescription = "Screenshot", tint = Color.White)
+                }
+                IconButton(onClick = onPip) {
+                    Icon(Icons.Rounded.PictureInPictureAlt, contentDescription = "PiP", tint = Color.White)
+                }
+                IconButton(onClick = onInfo) {
+                    Icon(Icons.Rounded.Info, contentDescription = "Info", tint = Color.White)
+                }
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+
+            SheetTitle("Audio FX & Sound Profile")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AudioPreset.entries.forEach { preset ->
+                    FilterChip(
+                        selected = state.audioPreset == preset,
+                        onClick = { onAudioPreset(preset) },
+                        label = { Text(preset.label) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, null, Modifier.size(16.dp)) },
+                    )
+                }
+            }
+
+            SheetTitle("Bookmarks & Timestamps")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = false,
+                    onClick = onAddBookmark,
+                    label = { Text("+ Add Bookmark") },
+                    leadingIcon = { Icon(Icons.Rounded.BookmarkAdd, null, Modifier.size(16.dp)) },
+                )
+                state.bookmarks.forEach { bookmark ->
+                    FilterChip(
+                        selected = false,
+                        onClick = { onSeekBookmark(bookmark) },
+                        label = { Text(bookmark.label) },
+                        leadingIcon = { Icon(Icons.Rounded.Bookmark, null, Modifier.size(16.dp)) },
+                    )
+                }
+            }
+
             val audioGroups = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
             if (audioGroups.isNotEmpty() && player != null) {
-                SheetTitle("Audio track")
+                SheetTitle("Audio Track")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     audioGroups.forEachIndexed { index, group ->
                         FilterChip(
@@ -714,7 +803,7 @@ private fun PlayerOptionsSheet(
 
             val textGroups = tracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
             if (player != null) {
-                SheetTitle("Subtitles")
+                SheetTitle("Subtitles & Sync")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val externalActive = subtitles.active != null
                     val textOff = !externalActive && (
@@ -754,42 +843,23 @@ private fun PlayerOptionsSheet(
                         leadingIcon = { Icon(Icons.Rounded.FileOpen, null, Modifier.size(16.dp)) },
                     )
                 }
-                if (subtitles.loading) {
-                    Text("Looking for subtitle files…", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
-                }
 
-                // Sync: shift subtitles earlier (−) or later (+).
                 val canDelay = subtitles.active != null || state.engine == Engine.VLC
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Sync", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(48.dp))
+                    Text("Sync", style = MaterialTheme.typography.bodyMedium, color = Color.White, modifier = Modifier.width(48.dp))
                     TextButton(onClick = { onSubtitleDelay(subtitles.delayMs - 100) }, enabled = canDelay) { Text("−0.1s") }
                     Text(
                         text = formatDelay(subtitles.delayMs),
                         style = MaterialTheme.typography.titleSmall,
+                        color = Color.White,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.width(72.dp),
+                        modifier = Modifier.width(60.dp),
                     )
                     TextButton(onClick = { onSubtitleDelay(subtitles.delayMs + 100) }, enabled = canDelay) { Text("+0.1s") }
-                    if (subtitles.delayMs != 0L) {
-                        TextButton(onClick = { onSubtitleDelay(0) }) { Text("Reset") }
-                    }
-                }
-                Slider(
-                    value = subtitles.delayMs.toFloat(),
-                    onValueChange = { onSubtitleDelay((it / 100).roundToInt() * 100L) },
-                    valueRange = -10_000f..10_000f,
-                    enabled = canDelay,
-                )
-                if (!canDelay) {
-                    Text(
-                        "Sync works with subtitle files and with the VLC engine.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f),
-                    )
                 }
             }
 
-            SheetTitle("Playback speed")
+            SheetTitle("Playback Speed")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val current = player?.playbackParameters?.speed ?: 1f
                 SPEEDS.forEach { speed ->
@@ -797,12 +867,11 @@ private fun PlayerOptionsSheet(
                         selected = abs(current - speed) < 0.01f,
                         onClick = { onSpeed(speed) },
                         label = { Text(formatSpeed(speed)) },
-                        leadingIcon = if (speed == 1f) ({ Icon(Icons.Rounded.Speed, null, Modifier.size(16.dp)) }) else null,
                     )
                 }
             }
 
-            SheetTitle("Aspect ratio")
+            SheetTitle("Aspect Ratio")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AspectRatioMode.entries.forEach { mode ->
                     FilterChip(selected = state.aspectRatio == mode, onClick = { onAspect(mode) }, label = { Text(mode.label) })
@@ -816,21 +885,16 @@ private fun PlayerOptionsSheet(
                         selected = state.engine == engine,
                         onClick = { onEngine(engine) },
                         label = { Text(engine.description) },
-                        leadingIcon = { Icon(Icons.Rounded.SwapHoriz, null, Modifier.size(16.dp)) },
                     )
                 }
             }
 
-            SheetTitle("Screen rotation")
+            SheetTitle("Screen Rotation")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !state.orientationLocked, onClick = { onOrientation(null) }, label = { Text("Default (${settings.orientation.label})") })
+                FilterChip(selected = !state.orientationLocked, onClick = { onOrientation(null) }, label = { Text("Default") })
                 FilterChip(selected = false, onClick = { onOrientation(OrientationMode.LANDSCAPE) }, label = { Text("Landscape") })
                 FilterChip(selected = false, onClick = { onOrientation(OrientationMode.PORTRAIT) }, label = { Text("Portrait") })
             }
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            SheetAction("Picture-in-picture", onPip)
-            SheetAction("Video information", onInfo)
         }
     }
 }

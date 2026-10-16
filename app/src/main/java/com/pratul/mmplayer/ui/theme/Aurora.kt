@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
@@ -65,59 +66,51 @@ object Aurora {
 }
 
 /**
- * Deep-space backdrop with soft violet, cyan and magenta glows. Drawn once per size change on a
- * Canvas (no bitmaps, no blur) so it costs almost nothing while lists scroll above it.
+ * Sober, clean background: solid dark canvas with very subtle, soft depth.
  */
 @Composable
 fun AuroraBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit = {}) {
     val dark = Aurora.isDark
     val base = MaterialTheme.colorScheme.background
-    val strength = if (dark) 1f else 0.55f
     val palette = LocalPalette.current
     Box(modifier.background(base)) {
         Canvas(Modifier.fillMaxSize()) {
             val r = max(size.width, size.height)
-            fun glow(color: Color, alpha: Float, center: Offset, radius: Float) = drawCircle(
+            drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(color.copy(alpha = alpha * strength), Color.Transparent),
-                    center = center,
-                    radius = radius,
+                    colors = listOf(palette.glowA.copy(alpha = if (dark) 0.06f else 0.03f), Color.Transparent),
+                    center = Offset(size.width * 0.1f, size.height * 0.05f),
+                    radius = r * 0.5f,
                 ),
-                radius = radius,
-                center = center,
+                radius = r * 0.5f,
+                center = Offset(size.width * 0.1f, size.height * 0.05f),
             )
-            glow(palette.glowA, 0.34f, Offset(size.width * 0.05f, size.height * 0.02f), r * 0.62f)
-            glow(palette.glowB, 0.20f, Offset(size.width * 1.0f, size.height * 0.30f), r * 0.50f)
-            glow(palette.glowC, 0.14f, Offset(size.width * 0.2f, size.height * 1.02f), r * 0.55f)
         }
         content()
     }
 }
 
-/** Frosted-glass surface: a faint vertical sheen plus a thin light edge. */
-fun Modifier.glass(shape: Shape = RoundedCornerShape(24.dp), strong: Boolean = false): Modifier = composed {
+/** Sober Material 3 surface container: clean, soft border and neutral fill. */
+fun Modifier.glass(shape: Shape = RoundedCornerShape(20.dp), strong: Boolean = false): Modifier = composed {
     val dark = Aurora.isDark
-    val frost = LocalPalette.current.frost
     val fill = if (dark) {
-        listOf(Color.White.copy(alpha = (if (strong) 0.13f else 0.08f) * frost), Color.White.copy(alpha = (if (strong) 0.06f else 0.025f) * frost))
+        Color(if (strong) 0xFF20222E else 0xFF181922)
     } else {
-        listOf(Color.White.copy(alpha = if (strong) 0.95f else 0.80f), Color.White.copy(alpha = if (strong) 0.80f else 0.55f))
+        Color(if (strong) 0xFFFFFFFF else 0xFFF3F4F6)
     }
-    val edge = if (dark) {
-        listOf(Color.White.copy(alpha = 0.20f * frost), Color.White.copy(alpha = 0.04f * frost))
-    } else {
-        listOf(Color.White, Color(0x1A3B2A85))
-    }
+    val edge = if (dark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
     this
         .clip(shape)
-        .background(Brush.verticalGradient(fill))
-        .border(1.dp, Brush.verticalGradient(edge), shape)
+        .background(fill)
+        .border(1.dp, edge, shape)
 }
 
-/** A neon gradient edge, e.g. around the selected or most important card. */
-fun Modifier.neonBorder(shape: Shape, width: Dp = 1.5.dp): Modifier = composed { border(width, Aurora.gradient, shape) }
+/** Subtle solid border for focused or active items. */
+fun Modifier.neonBorder(shape: Shape, width: Dp = 1.dp): Modifier = composed {
+    border(width, MaterialTheme.colorScheme.primary, shape)
+}
 
-/** Primary call to action: neon gradient pill with a soft coloured glow. */
+/** Sober primary button: solid Material 3 pill button with clean typography. */
 @Composable
 fun GlowButton(
     text: String,
@@ -127,18 +120,18 @@ fun GlowButton(
     enabled: Boolean = true,
 ) {
     val shape = RoundedCornerShape(50)
+    val bg = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
     Row(
         modifier = modifier
-            .shadow(if (enabled) 18.dp else 0.dp, shape, ambientColor = Aurora.accent, spotColor = Aurora.accent)
             .clip(shape)
-            .background(if (enabled) Aurora.gradient else Aurora.gradient(0.35f))
+            .background(bg)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 22.dp, vertical = 13.dp),
+            .padding(horizontal = 22.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (icon != null) Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-        Text(text, color = Color.White, style = MaterialTheme.typography.labelLarge)
+        if (icon != null) Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
+        Text(text, color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -185,23 +178,23 @@ fun GlassIconButton(
     }
 }
 
-/** An icon inside a neon gradient badge — the app's icon language for sections and actions. */
+/** An icon inside a clean, sober primary badge. */
 @Composable
 fun GradientIconBadge(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 44.dp, shape: Shape = RoundedCornerShape(14.dp)) {
     Box(
         modifier = modifier
             .size(size)
             .clip(shape)
-            .background(Aurora.gradient),
+            .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.52f))
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(size * 0.52f))
     }
 }
 
-/** Thin neon progress bar (watch progress, scanning). */
+/** Clean progress bar. */
 @Composable
-fun NeonProgress(progress: Float, modifier: Modifier = Modifier, height: Dp = 3.dp, track: Color = Color.White.copy(alpha = 0.18f)) {
+fun NeonProgress(progress: Float, modifier: Modifier = Modifier, height: Dp = 3.dp, track: Color = MaterialTheme.colorScheme.surfaceVariant) {
     Box(
         modifier
             .fillMaxWidth()
@@ -214,15 +207,15 @@ fun NeonProgress(progress: Float, modifier: Modifier = Modifier, height: Dp = 3.
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
                 .height(height)
                 .clip(RoundedCornerShape(50))
-                .background(Aurora.gradient),
+                .background(MaterialTheme.colorScheme.primary),
         )
     }
 }
 
-/** Text filled with the neon gradient (headings, the app name). */
+/** Clean heading text. */
 @Composable
 fun GradientText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
-    Text(text = text, style = style.copy(brush = Aurora.gradient), modifier = modifier)
+    Text(text = text, style = style.copy(color = MaterialTheme.colorScheme.primary), modifier = modifier)
 }
 
 /** Top bars float over the aurora; once content scrolls under them they frost slightly. */

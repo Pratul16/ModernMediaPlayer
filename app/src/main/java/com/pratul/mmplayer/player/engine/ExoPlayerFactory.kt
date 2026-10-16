@@ -60,6 +60,7 @@ object ExoPlayerFactory {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+            .setSpatializationBehavior(C.SPATIALIZATION_BEHAVIOR_AUTO)
             .build()
 
         val seekMs = settings.doubleTapSeekSeconds * 1000L

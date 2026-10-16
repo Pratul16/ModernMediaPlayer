@@ -19,8 +19,8 @@ android {
         // which the library and thumbnail pipeline are built on.
         minSdk = 29
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 7
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -72,8 +72,8 @@ android {
     }
     packaging {
         jniLibs {
-            // Store native libraries compressed: much smaller APK download for sideloading.
-            useLegacyPackaging = true
+            // Store native libraries compressed in App Bundles.
+            useLegacyPackaging = false
         }
     }
 }
@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.service)
+    implementation(libs.androidx.fragment.ktx)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
