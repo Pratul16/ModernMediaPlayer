@@ -23,6 +23,13 @@ android {
         versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Online subtitle search (OpenSubtitles). The key stays in local.properties, never in git:
+        //   opensubtitles.apiKey=YOUR_KEY
+        val localProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(::load)
+        }
+        buildConfigField("String", "OPENSUBTITLES_API_KEY", "\"${localProps.getProperty("opensubtitles.apiKey", "")}\"")
     }
 
     // Play Store upload key. keystore.properties and the .jks file stay on this computer only
@@ -56,6 +63,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     // libVLC and FFmpeg ship native code for four CPU types (~50 MB each). Build one APK per CPU type
     // so a phone only downloads its own. (Play Store App Bundles do this automatically.)
