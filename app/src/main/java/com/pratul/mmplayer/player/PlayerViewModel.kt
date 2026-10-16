@@ -65,6 +65,12 @@ enum class AudioPreset(val label: String) {
     FLAT("Flat"),
 }
 
+/** Repeat the current item, the whole queue, or neither. */
+enum class LoopMode(val label: String) { OFF("Off"), ONE("Repeat one"), ALL("Repeat all") }
+
+/** A section to play over and over: from [aMs] to [bMs]. */
+data class AbRepeat(val aMs: Long, val bMs: Long? = null)
+
 data class Bookmark(
     val id: Long = System.currentTimeMillis(),
     val positionMs: Long,
@@ -106,6 +112,9 @@ data class PlayerUiState(
     val subtitles: SubtitleUiState = SubtitleUiState(),
     val audioPreset: AudioPreset = AudioPreset.CLEAR_DIALOGUE,
     val bookmarks: List<Bookmark> = emptyList(),
+    val loopMode: LoopMode = LoopMode.OFF,
+    /** A-B repeat: A set (B null) while waiting for the second tap; both set while repeating. */
+    val abRepeat: AbRepeat? = null,
     /** Short notice such as "Resumed from 12:30"; cleared automatically. */
     val message: String? = null,
 )
@@ -209,6 +218,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     init {
+        // The repeat choice lives in the holder, so it survives closing and reopening the player.
+        _state.update { it.copy(loopMode = holder.loopMode) }
         // One ticker for position tracking, periodic history saves and external subtitle cues.
         viewModelScope.launch {
             var ticks = 0
@@ -217,6 +228,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 val player = _state.value.player ?: continue
                 if (player.playbackState != Player.STATE_IDLE) lastKnownPositionMs = player.currentPosition
                 if (player.isPlaying) playedMs = maxOf(playedMs, player.currentPosition)
+                // A-B repeat: past B, jump back to A.
+                _state.value.abRepeat?.let { ab ->
+                    val b = ab.bMs
+                    if (b != null && player.currentPosition >= b) player.seekTo(ab.aMs)
+                }
                 updateExternalCues(player)
                 if (++ticks % (SAVE_INTERVAL_MS / TICK_MS).toInt() == 0 && player.isPlaying) saveHistory()
             }
@@ -273,8 +289,38 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /** Loads everything remembered about the item at [index] and applies it. */
+    // --- Repeat --------------------------------------------------------------------------------
+
+    fun setLoopMode(mode: LoopMode) {
+        _state.update { it.copy(loopMode = mode, message = if (mode == LoopMode.OFF) "Repeat off" else mode.label) }
+        holder.loopMode = mode
+    }
+
+    /** First tap marks A, second marks B and starts repeating, third clears. */
+    fun abRepeatPoint() {
+        val player = _state.value.player ?: return
+        val pos = player.currentPosition.coerceAtLeast(0)
+        val current = _state.value.abRepeat
+        _state.update {
+            when {
+                current == null -> it.copy(abRepeat = AbRepeat(pos), message = "A set at ${formatDuration(pos)}: tap again to set B")
+                current.bMs == null && pos > current.aMs + MIN_AB_MS -> it.copy(
+                    abRepeat = current.copy(bMs = pos),
+                    message = "Repeating ${formatDuration(current.aMs)} – ${formatDuration(pos)}",
+                )
+                current.bMs == null -> it.copy(message = "B must be at least 1 second after A")
+                else -> it.copy(abRepeat = null, message = "A-B repeat off")
+            }
+        }
+        if (_state.value.abRepeat?.bMs != null) player.seekTo(_state.value.abRepeat!!.aMs)
+    }
+
+    fun clearAbRepeat() = _state.update { it.copy(abRepeat = null) }
+
     private fun startItem(index: Int, allowResume: Boolean) {
         currentIndex = index
+        // A section of one file means nothing for the next.
+        _state.update { it.copy(abRepeat = null) }
         val entry = queue.entries.getOrNull(index) ?: return
         val settings = settings.value
         holder.update { it.copy(uri = entry.uri, mimeType = entry.mimeType, title = entry.title, isAudio = entry.isAudio) }
@@ -435,6 +481,25 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             return
         }
         saveHistory(completed = true)
+        val player = _state.value.player
+        when (_state.value.loopMode) {
+            LoopMode.ONE -> {
+                player?.seekTo(0)
+                player?.play()
+                return
+            }
+            LoopMode.ALL -> if (currentIndex + 1 >= queue.entries.size) {
+                // End of the queue: start over from the first item.
+                if (queue.entries.size <= 1) {
+                    player?.seekTo(0)
+                    player?.play()
+                } else {
+                    startItem(0, allowResume = false)
+                }
+                return
+            }
+            LoopMode.OFF -> Unit
+        }
         val next = queue.entries.getOrNull(currentIndex + 1) ?: return
         val autoPlay = settings.value.autoPlayNext
         upNextJob?.cancel()
@@ -942,6 +1007,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         const val MAX_SUBTITLE_DELAY_MS = 30_000L
         private const val MAX_BOOST_MB = 1200
         private const val TICK_MS = 100L
+        private const val MIN_AB_MS = 1_000L
         private const val SAVE_INTERVAL_MS = 5_000L
         private const val MIN_RESUME_MS = 5_000L
         private const val END_MARGIN_MS = 15_000L

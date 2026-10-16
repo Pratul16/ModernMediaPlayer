@@ -8,6 +8,7 @@ import com.pratul.mmplayer.data.repository.PlaylistRepository
 import com.pratul.mmplayer.data.settings.SettingsRepository
 import com.pratul.mmplayer.media.scanner.MediaScanner
 import com.pratul.mmplayer.player.service.PlaybackHolder
+import com.pratul.mmplayer.player.service.SleepTimer
 import com.pratul.mmplayer.media.files.FileOperations
 import com.pratul.mmplayer.security.AppLock
 import com.pratul.mmplayer.media.vault.Vault
@@ -46,6 +47,8 @@ class AppContainer(context: Context) {
     val mediaScanner: MediaScanner by lazy { MediaScanner(appContext, database.mediaDao(), appScope) }
 
     val playbackHolder: PlaybackHolder by lazy { PlaybackHolder(appContext) }
+
+    val sleepTimer: SleepTimer by lazy { SleepTimer(appContext, playbackHolder, appScope) }
 
     val fileOperations: FileOperations by lazy { FileOperations(appContext) }
 

@@ -10,6 +10,7 @@ import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.pratul.mmplayer.player.LoopMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,9 @@ class PlaybackHolder(private val context: Context) {
     /** Set by the background listener: continue to the next item when one finishes. */
     var autoPlayNext: Boolean = true
 
+    /** Repeat setting chosen in the player; also applied while playing in the background. */
+    var loopMode: LoopMode = LoopMode.OFF
+
     // Media3's engine holds its own wake lock; the VLC engine needs one while playing in the background.
     private val wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
         .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ModernMediaPlayer:background")
@@ -58,9 +62,19 @@ class PlaybackHolder(private val context: Context) {
             val current = _nowPlaying.value ?: return
             if (playbackState != Player.STATE_ENDED) return
             val player = current.player
-            if (autoPlayNext && player.hasNextMediaItem()) {
-                player.seekToNextMediaItem()
-                player.play()
+            when {
+                loopMode == LoopMode.ONE -> {
+                    player.seekTo(0)
+                    player.play()
+                }
+                (autoPlayNext || loopMode == LoopMode.ALL) && player.hasNextMediaItem() -> {
+                    player.seekToNextMediaItem()
+                    player.play()
+                }
+                loopMode == LoopMode.ALL -> {
+                    player.seekTo(0, 0)
+                    player.play()
+                }
             }
         }
 
@@ -99,7 +113,15 @@ class PlaybackHolder(private val context: Context) {
         val current = _nowPlaying.value ?: return
         this.autoPlayNext = autoPlayNext
         // Without the screen there is no "Up next" card, so let the queue continue on its own.
-        (current.player as? ExoPlayer)?.pauseAtEndOfMediaItems = !autoPlayNext
+        (current.player as? ExoPlayer)?.let { exo ->
+            // ExoPlayer repeats natively; VLC is handled in backgroundListener when an item ends.
+            exo.repeatMode = when (loopMode) {
+                LoopMode.ONE -> Player.REPEAT_MODE_ONE
+                LoopMode.ALL -> Player.REPEAT_MODE_ALL
+                LoopMode.OFF -> Player.REPEAT_MODE_OFF
+            }
+            exo.pauseAtEndOfMediaItems = !autoPlayNext && loopMode == LoopMode.OFF
+        }
         current.player.addListener(backgroundListener)
         _nowPlaying.value = current.copy(detached = true)
         updateWakeLock()
@@ -110,6 +132,8 @@ class PlaybackHolder(private val context: Context) {
         val current = _nowPlaying.value ?: return null
         if (!current.detached || current.uri != uri) return null
         current.player.removeListener(backgroundListener)
+        // Back on screen, the player screen handles repeat itself.
+        (current.player as? ExoPlayer)?.repeatMode = Player.REPEAT_MODE_OFF
         _nowPlaying.value = current.copy(detached = false)
         updateWakeLock()
         return current

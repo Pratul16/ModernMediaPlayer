@@ -3,6 +3,12 @@
 
 package com.pratul.mmplayer.player.ui
 
+import androidx.compose.material.icons.rounded.RepeatOne
+import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material.icons.rounded.Bedtime
+import com.pratul.mmplayer.player.service.SleepTimerState
+import com.pratul.mmplayer.player.LoopMode
+import com.pratul.mmplayer.ModernMediaApp
 import android.content.Context
 import android.graphics.Typeface
 import android.media.AudioManager
@@ -158,6 +164,9 @@ interface PlayerHost {
 private data class Feedback(val icon: ImageVector, val text: String, val progress: Float? = null, val sticky: Boolean = false)
 
 private val SPEEDS = (1..12).map { it * 0.25f }
+
+/** Sleep timer choices, in minutes. */
+private val SLEEP_MINUTES = listOf(10, 15, 30, 45, 60, 90)
 private const val SEEK_RANGE_MS = 90_000L
 private const val STREAK_RESET_MS = 1_300L
 private val QUICK_SPEEDS = listOf(0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 2.5f, 3f)
@@ -173,6 +182,8 @@ private fun nearestSpeedIndex(speed: Float): Int =
 fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val sleepTimer = (LocalContext.current.applicationContext as ModernMediaApp).container.sleepTimer
+    val sleepState by sleepTimer.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -625,6 +636,12 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
             onSeekBookmark = viewModel::seekToBookmark,
             onDeleteBookmark = viewModel::deleteBookmark,
             onTakeScreenshot = viewModel::takeScreenshot,
+            sleep = sleepState,
+            onSleepMinutes = sleepTimer::start,
+            onSleepEndOfItem = sleepTimer::startEndOfItem,
+            onSleepCancel = sleepTimer::cancel,
+            onLoop = viewModel::setLoopMode,
+            onAbRepeat = viewModel::abRepeatPoint,
         )
     }
 
@@ -702,6 +719,12 @@ private fun PlayerRightSidePanel(
     onSeekBookmark: (Bookmark) -> Unit,
     onDeleteBookmark: (Bookmark) -> Unit,
     onTakeScreenshot: () -> Unit,
+    sleep: SleepTimerState?,
+    onSleepMinutes: (Int) -> Unit,
+    onSleepEndOfItem: () -> Unit,
+    onSleepCancel: () -> Unit,
+    onLoop: (LoopMode) -> Unit,
+    onAbRepeat: () -> Unit,
 ) {
     val player = state.player
     Box(
@@ -753,6 +776,64 @@ private fun PlayerRightSidePanel(
                 IconButton(onClick = onInfo) {
                     Icon(Icons.Rounded.Info, contentDescription = "Info", tint = Color.White)
                 }
+            }
+
+            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+
+            SheetTitle(
+                when {
+                    sleep == null -> "Sleep Timer"
+                    sleep.endOfItem -> "Sleep Timer · stops at the end"
+                    else -> "Sleep Timer · ${formatDuration(sleep.remainingMs ?: 0)} left"
+                },
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = sleep == null, onClick = onSleepCancel, label = { Text("Off") })
+                SLEEP_MINUTES.forEach { minutes ->
+                    FilterChip(
+                        selected = false,
+                        onClick = { onSleepMinutes(minutes) },
+                        label = { Text(if (minutes < 60) "$minutes min" else "${minutes / 60} h${if (minutes % 60 > 0) " ${minutes % 60} min" else ""}") },
+                        leadingIcon = { Icon(Icons.Rounded.Bedtime, null, Modifier.size(16.dp)) },
+                    )
+                }
+                FilterChip(
+                    selected = sleep?.endOfItem == true,
+                    onClick = onSleepEndOfItem,
+                    label = { Text("End of this ${if (state.file?.mimeType?.startsWith("audio") == true) "track" else "video"}") },
+                )
+            }
+
+            SheetTitle("Repeat")
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LoopMode.entries.forEach { mode ->
+                    FilterChip(
+                        selected = state.loopMode == mode,
+                        onClick = { onLoop(mode) },
+                        label = { Text(mode.label) },
+                        leadingIcon = {
+                            Icon(
+                                if (mode == LoopMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
+                                null,
+                                Modifier.size(16.dp),
+                            )
+                        },
+                    )
+                }
+                val ab = state.abRepeat
+                FilterChip(
+                    selected = ab?.bMs != null,
+                    onClick = onAbRepeat,
+                    label = {
+                        Text(
+                            when {
+                                ab == null -> "A-B repeat: set A"
+                                ab.bMs == null -> "A ${formatDuration(ab.aMs)} · set B"
+                                else -> "A-B ${formatDuration(ab.aMs)}–${formatDuration(ab.bMs)} · off"
+                            },
+                        )
+                    },
+                )
             }
 
             HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
