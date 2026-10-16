@@ -3,6 +3,7 @@
 
 package com.pratul.mmplayer.player.ui
 
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.Bedtime
@@ -184,6 +185,8 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val sleepTimer = (LocalContext.current.applicationContext as ModernMediaApp).container.sleepTimer
     val sleepState by sleepTimer.state.collectAsStateWithLifecycle()
+    val thumbnails = rememberSeekThumbnails(state.file?.uri, isVideo = state.file?.mimeType?.startsWith("audio") != true)
+    var gesturePreviewMs by remember { mutableStateOf<Long?>(null) }
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -314,6 +317,7 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
                 val duration = p.duration.takeIf { it != C.TIME_UNSET } ?: Long.MAX_VALUE
                 val range = minOf(SEEK_RANGE_MS, duration)
                 seekTarget = (seekStart + (fractionOfWidth * range).toLong()).coerceIn(0, duration)
+                gesturePreviewMs = seekTarget
                 val delta = seekTarget - seekStart
                 val sign = if (delta >= 0) "+" else "−"
                 val total = if (duration == Long.MAX_VALUE) "" else " / ${formatDuration(duration)}"
@@ -326,6 +330,7 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
 
             override fun onSeekEnd() {
                 player?.seekPrecisely(seekTarget)
+                gesturePreviewMs = null
                 seekStart = C.TIME_UNSET
                 feedback = feedback?.copy(sticky = false)
             }
@@ -485,6 +490,15 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
         }
 
         feedback?.let { FeedbackPill(it, Modifier.align(Alignment.Center)) }
+        val previewAt = gesturePreviewMs
+        if (previewAt != null && thumbnails != null) {
+            SeekPreviewFrame(
+                thumbnails = thumbnails,
+                positionMs = previewAt,
+                width = 200.dp,
+                modifier = Modifier.align(Alignment.Center).offset(y = (-130).dp),
+            )
+        }
 
         state.message?.let { message ->
             Text(
@@ -508,6 +522,7 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
                 isPlaying = isPlaying,
                 speedLabel = formatSpeed(state.player?.playbackParameters?.speed ?: 1f),
                 aspectLabel = state.aspectRatio.label,
+                thumbnails = thumbnails,
                 subtitlesOn = state.subtitles.active != null ||
                     tracks.groups.any { it.type == C.TRACK_TYPE_TEXT && it.isSelected },
                 actions = PlayerControlActions(

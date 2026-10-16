@@ -114,6 +114,7 @@ fun PlayerControls(
     aspectLabel: String,
     subtitlesOn: Boolean,
     actions: PlayerControlActions,
+    thumbnails: SeekThumbnails? = null,
 ) {
     val player = state.player
     var position by remember { mutableLongStateOf(0L) }
@@ -263,6 +264,7 @@ fun PlayerControls(
                     position = position,
                     duration = duration,
                     buffered = buffered,
+                    thumbnails = thumbnails,
                     onScrub = { actions.onInteraction() },
                     onSeek = { target ->
                         player?.seekTo(target)
@@ -344,6 +346,7 @@ private fun NeonSeekBar(
     buffered: Long,
     onScrub: () -> Unit,
     onSeek: (Long) -> Unit,
+    thumbnails: SeekThumbnails? = null,
 ) {
     var dragging by remember { mutableStateOf(false) }
     var dragFraction by remember { mutableFloatStateOf(0f) }
@@ -414,6 +417,18 @@ private fun NeonSeekBar(
                 .clip(CircleShape)
                 .background(Color.White),
         )
+        if (dragging && duration > 0 && thumbnails != null) {
+            val frameW = 160.dp
+            val frameWPx = with(density) { frameW.toPx() }
+            val frameHPx = frameWPx * 9 / 16
+            val x = (widthPx * dragFraction - frameWPx / 2).coerceIn(0f, (widthPx - frameWPx).coerceAtLeast(0f))
+            SeekPreviewFrame(
+                thumbnails = thumbnails,
+                positionMs = (dragFraction * duration).toLong(),
+                width = frameW,
+                modifier = Modifier.offset { IntOffset(x.roundToInt(), (-96 - frameHPx - 16).roundToInt()) },
+            )
+        }
         if (dragging && duration > 0) {
             Text(
                 text = formatDuration((dragFraction * duration).toLong()),
