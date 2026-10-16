@@ -40,6 +40,11 @@ class QueueBuilder(private val context: Context, private val mediaDao: MediaDao)
     }
 
     suspend fun build(uri: Uri, mimeType: String?): PlaybackQueue {
+        if (uri.scheme != "content" && uri.scheme != "file" && uri.scheme != null) {
+            // A network stream or share: not in the library; name it after the link.
+            val name = uri.lastPathSegment?.takeIf { it.isNotBlank() } ?: uri.host ?: "Network stream"
+            return PlaybackQueue(listOf(QueueEntry(uri, name, mimeType, null, null, null, null, null)), 0)
+        }
         val media = findInLibrary(uri)
         if (media == null) {
             val (name, size) = describe(uri)

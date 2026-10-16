@@ -1054,6 +1054,10 @@ private val VLC_FIRST_MIME_TYPES = setOf(
     "application/vnd.rn-realmedia", "application/vnd.rn-realmedia-vbr", "video/mpeg", "video/x-mpeg",
 )
 
+/** Addresses only VLC can open: network shares and streaming protocols. */
+private val EXO_SCHEMES = setOf("content", "file", "http", "https", "android.resource")
+
 private fun QueueEntry.prefersVlc(): Boolean =
-    title.substringAfterLast('.', "").lowercase() in VLC_FIRST_EXTENSIONS ||
+    (uri.scheme?.lowercase() ?: "file") !in EXO_SCHEMES ||
+        title.substringAfterLast('.', "").lowercase() in VLC_FIRST_EXTENSIONS ||
         mimeType?.lowercase() in VLC_FIRST_MIME_TYPES

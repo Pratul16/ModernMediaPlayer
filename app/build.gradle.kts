@@ -116,6 +116,9 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.common)
+    // Network streams: HLS (.m3u8) and DASH (.mpd).
+    implementation(libs.androidx.media3.hls)
+    implementation(libs.androidx.media3.dash)
     // Software audio decoders (AC-3, E-AC-3, DTS, TrueHD, ...) for formats phones lack in hardware.
     implementation(libs.media3.ffmpeg.decoder)
     // Fallback engine for containers/codecs Media3 cannot handle (WMV, RMVB, DivX, MPEG-2, ...).

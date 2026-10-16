@@ -13,6 +13,7 @@ import com.pratul.mmplayer.media.files.FileOperations
 import com.pratul.mmplayer.security.AppLock
 import com.pratul.mmplayer.media.vault.Vault
 import com.pratul.mmplayer.billing.TipJar
+import com.pratul.mmplayer.media.network.NetworkStore
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,4 +59,7 @@ class AppContainer(context: Context) {
 
     /** "Buy me a coffee" tips through Google Play (About & developer page). */
     val tipJar: TipJar by lazy { TipJar(appContext) }
+
+    /** Saved network servers and recent stream links. */
+    val networkStore: NetworkStore by lazy { NetworkStore(appContext) }
 }

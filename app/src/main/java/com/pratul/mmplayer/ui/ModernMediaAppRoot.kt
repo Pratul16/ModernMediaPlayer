@@ -90,6 +90,8 @@ import com.pratul.mmplayer.ui.navigation.SearchRoute
 import com.pratul.mmplayer.ui.navigation.SettingsCategoryRoute
 import com.pratul.mmplayer.ui.navigation.SettingsRoute
 import com.pratul.mmplayer.ui.navigation.HiddenFoldersRoute
+import com.pratul.mmplayer.ui.navigation.NetworkRoute
+import com.pratul.mmplayer.ui.network.NetworkScreen
 import com.pratul.mmplayer.ui.vault.HiddenFoldersScreen
 import com.pratul.mmplayer.ui.navigation.TopLevelDestination
 import com.pratul.mmplayer.ui.navigation.VideosRoute
@@ -166,8 +168,10 @@ fun ModernMediaAppRoot() {
                     onOpenSettings = { navController.navigate(SettingsRoute) },
                     onOpenDestination = navController::navigateToTopLevel,
                     onShowMessage = showMessage,
+                    onOpenNetwork = { navController.navigate(NetworkRoute) },
                 )
             }
+            composable<NetworkRoute> { NetworkScreen(onBack = { navController.popBackStack() }) }
             composable<VideosRoute> { LibraryScreen(type = MediaType.VIDEO) }
             composable<AudioRoute> { LibraryScreen(type = MediaType.AUDIO) }
             composable<FoldersRoute> {

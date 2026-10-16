@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -129,6 +130,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenDestination: (TopLevelDestination) -> Unit,
     onShowMessage: (String) -> Unit,
+    onOpenNetwork: () -> Unit = {},
     viewModel: HomeViewModel = modernMediaViewModel { HomeViewModel(it.mediaRepository, it.playlistRepository, it.mediaScanner) },
 ) {
     val videos by viewModel.videos.collectAsStateWithLifecycle()
@@ -185,6 +187,7 @@ fun HomeScreen(
                 onFavorites = { onOpenDestination(TopLevelDestination.PLAYLISTS) },
                 onPlaylists = { onOpenDestination(TopLevelDestination.PLAYLISTS) },
                 onCreateFolder = { creatingFolder = true },
+                onNetwork = onOpenNetwork,
             )
         }
         when (selectedTab) {
@@ -477,9 +480,11 @@ private fun QuickActions(
     onFavorites: () -> Unit,
     onPlaylists: () -> Unit,
     onCreateFolder: () -> Unit,
+    onNetwork: () -> Unit,
 ) {
     val actions = listOf(
         QuickAction("Open file", Icons.Rounded.FileOpen, onOpenFile),
+        QuickAction("Network", Icons.Rounded.Wifi, onNetwork),
         QuickAction("Scan", Icons.Rounded.Radar, onScan),
         QuickAction("Folders", Icons.Rounded.FolderOpen, onOpenFolders),
         QuickAction("Favorites", Icons.Rounded.Favorite, onFavorites),

@@ -25,6 +25,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object SearchRoute
 @Serializable data object SettingsRoute
 @Serializable data object HiddenFoldersRoute
+@Serializable data object NetworkRoute
 @Serializable data class SettingsCategoryRoute(val id: String)
 
 enum class TopLevelDestination(
