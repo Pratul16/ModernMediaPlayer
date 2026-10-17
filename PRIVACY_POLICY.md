@@ -1,6 +1,6 @@
 # Privacy Policy — Modern Media Player
 
-_Last updated: 5 October 2026_
+_Last updated: 17 October 2026_
 
 Modern Media Player ("the app") plays video and audio files stored on your device. This policy
 explains what the app accesses and what it does with it.
@@ -11,10 +11,17 @@ explains what the app accesses and what it does with it.
 accounts, no ads and no analytics, and never uploads your media, history or settings. Everything
 stays on your device.
 
-The only network use is the optional "Buy me a coffee" tip on the About page, which is handled
-entirely by Google Play Billing under
-[Google's privacy policy](https://policies.google.com/privacy). The app never sees your payment
-details.
+The app connects to the internet or your local network only when you ask it to:
+
+- **Network playback:** when you open a video link or browse a shared folder or media server on
+  your Wi-Fi, the app connects directly to that address to play it. Logins you save for a server
+  are kept only on your device.
+- **Subtitle search (when available):** if you search for subtitles online, the video's name and
+  a fingerprint of the file (not the file itself) are sent to OpenSubtitles.com to find matches,
+  under [their privacy policy](https://www.opensubtitles.com/en/privacy).
+- **Tips:** the optional "Buy me a coffee" tip on the About page is handled entirely by Google
+  Play Billing under [Google's privacy policy](https://policies.google.com/privacy). The app never
+  sees your payment details.
 
 ## What the app accesses on your device
 

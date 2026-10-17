@@ -1,0 +1,16 @@
+/* Before/after mock-ups of the see-through player overlays. Rendered at 2400x700 with headless Chrome. */
+html, body { margin: 0; width: 2400px; height: 700px; overflow: hidden; background: #0b0b12; font-family: "Segoe UI", Roboto, system-ui, sans-serif; color: #fff; }
+.row { display: flex; gap: 20px; padding: 0 20px; }
+.col { width: 1170px; }
+.label { height: 120px; display: flex; flex-direction: column; justify-content: center; }
+.label b { font-size: 40px; letter-spacing: -0.5px; }
+.label span { font-size: 24px; color: rgba(255,255,255,.65); margin-top: 4px; }
+.today b { color: #fca5a5; }
+.new b { color: #86efac; }
+.screen { position: relative; width: 1170px; height: 540px; border-radius: 28px; overflow: hidden; background: #000; }
+.screen > img.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* Proposed style: no coloured or frosted boxes — white icons and text with a soft shadow. */
+.ic { fill: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,.75)) drop-shadow(0 0 6px rgba(0,0,0,.45)); }
+.tx { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 0 8px rgba(0,0,0,.5); }
+.abs { position: absolute; }

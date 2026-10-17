@@ -44,8 +44,10 @@ Before every new upload, raise `versionCode` (and `versionName`) in `app/build.g
      The app plays the user's own files and has no user-generated content sharing.
    - Target audience: 18+ (or 13+); not designed for children.
    - Data safety: **No data collected, no data shared** (answer it the same way as for
-     Expenses Manager). The internet permission is used only by Google Play Billing for tips;
-     purchases are processed by Google. Biometrics are processed by Android only.
+     Expenses Manager). The internet is used for tips (Google Play Billing), and from 1.2.0 for
+     links/servers the user opens themselves; nothing is sent to the developer. Biometrics are
+     processed by Android only. If online subtitle search is enabled later (OpenSubtitles key),
+     review the Data safety form: the video name/file hash goes to OpenSubtitles on request.
    - In-app products: the app offers optional tips, so the listing shows "In-app purchases".
    - Foreground service declaration (media playback): "Continues audio/video playback when
      the user leaves the player; shows media controls in the notification." Attach a short
@@ -74,7 +76,11 @@ separate *public* repo containing only `PRIVACY_POLICY.md` (the code repo can st
 >
 > • Smart gestures: swipe to seek, slide for volume and brightness, double-tap to skip (+10s, +20s, +30s), hold for 2× and slide to pick any speed up to 3×
 > • Remembers everything: resume where you left off, next episode automatically, subtitles found for you
+> • Clean, see-through player controls that never hide your video
 > • Background audio and picture-in-picture with ⟲10 / 10⟳ controls
+> • Sleep timer, repeat one/all and A-B repeat, preview frames while seeking
+> • Network: play video links and live streams, and movies from shared folders (SMB) and media servers (DLNA) on your Wi-Fi
+> • Home-screen music widget, album art on the lock screen and Android Auto
 > • Subtitles: SRT, ASS, VTT with sync delay, sizes and colours
 > • File manager built in: rename, copy, cut, move, delete, share, multi-select, create folders
 > • Playlists and favorites
@@ -114,3 +120,16 @@ In-app products can only be created after a signed `.aab` with the billing libra
 uploaded to any testing track. Until they exist, the About page says tips are only available in
 the Play Store version. To show a privacy policy link on the About page, put its public URL in
 `privacy_policy_url` in `app/src/main/res/values/strings.xml`.
+
+## 7. Release notes
+
+**1.2.0** (versionCode 8), paste into "Release notes" (max 500 characters):
+
+```
+• New see-through player: controls, speed and seek messages no longer cover your video
+• Sleep timer, repeat one/all and A-B repeat
+• Preview frames while seeking
+• Network: play links, live streams, shared folders and media servers on your Wi-Fi
+• Music widget, lock-screen artwork and Android Auto
+• Fixes and improvements
+```
