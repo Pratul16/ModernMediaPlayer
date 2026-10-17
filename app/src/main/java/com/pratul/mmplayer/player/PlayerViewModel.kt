@@ -7,6 +7,7 @@ import android.app.Application
 import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
+import android.content.ContentUris
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -740,11 +741,17 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
         val items = queue.entries.map { entry ->
+            val artwork = artworkUri(entry)
             MediaItem.Builder()
                 .setUri(entry.uri)
                 .setMediaId(entry.uri.toString())
                 .setMimeType(entry.mimeType)
-                .setMediaMetadata(MediaMetadata.Builder().setTitle(entry.title).build())
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(entry.title)
+                        .apply { if (artwork != null) setArtworkUri(artwork) }
+                        .build(),
+                )
                 .build()
         }
         player.addListener(listener)
@@ -969,6 +976,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND -> "The file no longer exists. It may have been moved, deleted or its SD card removed."
         PlaybackException.ERROR_CODE_IO_NO_PERMISSION -> "Modern Media Player does not have permission to read this file."
         else -> "Unable to play this file on this device."
+    }
+
+    private fun artworkUri(entry: QueueEntry): Uri? {
+        if (entry.isAudio && entry.albumId != null) {
+            return ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), entry.albumId)
+        }
+        if (!entry.isAudio && entry.uri.scheme == "content") return entry.uri
+        return null
     }
 
     private fun exoEngine(mode: DecoderMode) = when (mode) {

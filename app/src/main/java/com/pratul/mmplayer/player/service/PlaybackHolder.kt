@@ -93,19 +93,20 @@ class PlaybackHolder(private val context: Context) {
     fun attach(nowPlaying: NowPlaying) {
         val previous = _nowPlaying.value
         if (previous != null && previous.player !== nowPlaying.player && previous.detached) {
-            // A background player from earlier gives way to the new one.
             previous.player.removeListener(backgroundListener)
             previous.player.release()
         }
         _nowPlaying.value = nowPlaying.copy(detached = false)
-        // Plain start (the app is in the foreground here); Media3 promotes the service to a foreground
-        // service with its notification once playback actually runs.
         runCatching { context.startService(Intent(context, PlaybackService::class.java)) }
+        NowPlayingWidget.refresh(context)
     }
 
     /** Keeps the item title/uri in sync while the screen is open (queue moves to the next file). */
     fun update(transform: (NowPlaying) -> NowPlaying) {
-        _nowPlaying.value?.let { _nowPlaying.value = transform(it) }
+        _nowPlaying.value?.let {
+            _nowPlaying.value = transform(it)
+            NowPlayingWidget.refresh(context)
+        }
     }
 
     /** The player screen closed but playback should continue. */
@@ -156,6 +157,7 @@ class PlaybackHolder(private val context: Context) {
         } else {
             current.player.pause()
         }
+        NowPlayingWidget.refresh(context)
     }
 
     val isPlayingInBackground: Boolean

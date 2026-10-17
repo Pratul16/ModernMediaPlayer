@@ -89,15 +89,32 @@
                 android:resource="@xml/vault_paths" />
         </provider>
 
-        <!-- Keeps audio playing after the player closes; media notification and lock-screen controls. -->
+        <!-- Keeps audio playing after the player closes; media notification, lock-screen, Android Auto. -->
         <service
             android:name=".player.service.PlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
+
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+        <!-- Now-playing home-screen widget. -->
+        <receiver
+            android:name=".player.service.NowPlayingWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_now_playing" />
+        </receiver>
     </application>
 
 </manifest>

@@ -19,6 +19,7 @@ data class QueueEntry(
     val path: String?,
     val volumeName: String?,
     val folderPath: String?,
+    val albumId: Long? = null,
 ) {
     val isAudio: Boolean get() = mimeType?.startsWith("audio/") == true
 }
@@ -95,5 +96,6 @@ class QueueBuilder(private val context: Context, private val mediaDao: MediaDao)
         path = path,
         volumeName = volumeName,
         folderPath = folderPath,
+        albumId = albumId,
     )
 }

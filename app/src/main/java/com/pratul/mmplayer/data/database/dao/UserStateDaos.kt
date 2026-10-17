@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.pratul.mmplayer.data.database.entity.FavoriteEntity
+import com.pratul.mmplayer.data.database.entity.MediaEntity
 import com.pratul.mmplayer.data.database.entity.PlaybackHistoryEntity
 import com.pratul.mmplayer.data.database.entity.PlaylistEntity
 import com.pratul.mmplayer.data.database.entity.PlaylistItemEntity
@@ -95,4 +96,17 @@ interface PlaylistDao {
 
     @Query("SELECT COUNT(*) FROM playlists WHERE name = :name COLLATE NOCASE")
     suspend fun countByName(name: String): Int
+
+    @Query("SELECT * FROM playlists ORDER BY updatedAt DESC")
+    suspend fun getAll(): List<PlaylistEntity>
+
+    @Query(
+        """
+        SELECT m.* FROM playlist_items i
+        JOIN media_files m ON m.id = i.mediaId
+        WHERE i.playlistId = :playlistId
+        ORDER BY i.position
+        """,
+    )
+    suspend fun getItemMedia(playlistId: Long): List<MediaEntity>
 }

@@ -86,6 +86,31 @@ interface MediaDao {
     @Query("SELECT * FROM media_files WHERE volumeName = :volume AND folderPath = :folderPath AND mediaType = :type")
     suspend fun getInFolder(volume: String, folderPath: String, type: String): List<MediaEntity>
 
+    // --- Browse tree (Android Auto, widget) ---
+
+    @Query("SELECT * FROM media_files WHERE mediaType = 'AUDIO' ORDER BY displayName COLLATE NOCASE LIMIT :limit")
+    suspend fun getAudio(limit: Int): List<MediaEntity>
+
+    @Query(
+        """
+        SELECT m.* FROM media_files m
+        JOIN playback_history h ON h.mediaId = m.id
+        WHERE m.mediaType = 'AUDIO' AND h.lastPlayedAt IS NOT NULL
+        ORDER BY h.lastPlayedAt DESC LIMIT :limit
+        """,
+    )
+    suspend fun getRecentAudio(limit: Int): List<MediaEntity>
+
+    @Query(
+        """
+        SELECT m.* FROM media_files m
+        JOIN favorites f ON f.mediaId = m.id
+        WHERE m.mediaType = 'AUDIO'
+        ORDER BY f.addedAt DESC LIMIT :limit
+        """,
+    )
+    suspend fun getFavoriteAudio(limit: Int): List<MediaEntity>
+
     // --- Scanner support ---
 
     @Query("SELECT COUNT(*) FROM media_files")
