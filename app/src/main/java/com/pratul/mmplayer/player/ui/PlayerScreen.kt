@@ -20,9 +20,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.FileOpen
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.Subtitles
+import androidx.compose.material.icons.rounded.TravelExplore
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
@@ -31,11 +34,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.text.Cue
+import com.pratul.mmplayer.BuildConfig
 import com.pratul.mmplayer.player.AudioPreset
 import com.pratul.mmplayer.player.Bookmark
 import com.pratul.mmplayer.player.ResumePrompt
+import com.pratul.mmplayer.player.SubtitleSearchState
 import com.pratul.mmplayer.player.SubtitleUiState
 import com.pratul.mmplayer.player.UpNext
+import com.pratul.mmplayer.player.subtitles.OpenSubtitlesClient
 import com.pratul.mmplayer.ui.theme.GlassButton
 import com.pratul.mmplayer.ui.theme.GlowButton
 import com.pratul.mmplayer.ui.theme.glass
@@ -95,6 +101,7 @@ import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -103,6 +110,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -208,6 +217,8 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
     var tracks by remember { mutableStateOf(Tracks.EMPTY) }
     var playerView by remember { mutableStateOf<PlayerView?>(null) }
     val externalCues by viewModel.externalCues.collectAsStateWithLifecycle()
+    val subtitleSearchState by viewModel.subtitleSearch.collectAsStateWithLifecycle()
+    var showSubtitleSearch by remember { mutableStateOf(false) }
     val subtitlePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             // Keep access so the choice can be remembered for this video.
@@ -645,6 +656,10 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
             onSelectSubtitleFile = viewModel::selectSubtitleFile,
             onClearExternalSubtitle = viewModel::clearExternalSubtitle,
             onLoadSubtitleFile = { subtitlePicker.launch(arrayOf("*/*")) },
+            onSearchOnline = {
+                viewModel.clearSubtitleSearch()
+                showSubtitleSearch = true
+            },
             onSubtitleDelay = viewModel::setSubtitleDelay,
             onAudioPreset = viewModel::setAudioPreset,
             onAddBookmark = viewModel::addBookmark,
@@ -662,6 +677,19 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
 
     if (showInfo) {
         MediaInfoDialog(state = state, tracks = tracks, videoSize = videoSize, onDismiss = { showInfo = false })
+    }
+
+    if (showSubtitleSearch) {
+        SubtitleSearchDialog(
+            state = subtitleSearchState,
+            defaultQuery = viewModel.defaultSubtitleQuery(),
+            onSearch = viewModel::searchOnlineSubtitles,
+            onDownload = viewModel::downloadOnlineSubtitle,
+            onDismiss = {
+                showSubtitleSearch = false
+                viewModel.clearSubtitleSearch()
+            },
+        )
     }
 
     state.error?.let { message ->
@@ -728,6 +756,7 @@ private fun PlayerRightSidePanel(
     onSelectSubtitleFile: (Uri) -> Unit,
     onClearExternalSubtitle: () -> Unit,
     onLoadSubtitleFile: () -> Unit,
+    onSearchOnline: () -> Unit,
     onSubtitleDelay: (Long) -> Unit,
     onAudioPreset: (AudioPreset) -> Unit,
     onAddBookmark: () -> Unit,
@@ -938,6 +967,14 @@ private fun PlayerRightSidePanel(
                         label = { Text("Load file…") },
                         leadingIcon = { Icon(Icons.Rounded.FileOpen, null, Modifier.size(16.dp)) },
                     )
+                    if (OpenSubtitlesClient.isAvailable) {
+                        FilterChip(
+                            selected = false,
+                            onClick = onSearchOnline,
+                            label = { Text("Search online…") },
+                            leadingIcon = { Icon(Icons.Rounded.TravelExplore, null, Modifier.size(16.dp)) },
+                        )
+                    }
                 }
 
                 val canDelay = subtitles.active != null || state.engine == Engine.VLC
@@ -1009,6 +1046,116 @@ private fun SheetAction(text: String, onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp),
+    )
+}
+
+@Composable
+private fun SubtitleSearchDialog(
+    state: SubtitleSearchState,
+    defaultQuery: String,
+    onSearch: (query: String, languages: String) -> Unit,
+    onDownload: (com.pratul.mmplayer.player.subtitles.SubtitleResult) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by remember { mutableStateOf(defaultQuery) }
+    val languages = remember { listOf("en" to "English", "hi" to "Hindi", "es" to "Spanish", "fr" to "French", "de" to "German", "pt" to "Portuguese", "it" to "Italian", "ja" to "Japanese", "ko" to "Korean", "zh" to "Chinese", "ar" to "Arabic", "ru" to "Russian") }
+    var selectedLangs by remember { mutableStateOf(setOf("en", "hi")) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF12121A).copy(alpha = 0.96f),
+        titleContentColor = Color.White,
+        textContentColor = Color.White,
+        title = { Text("Search subtitles online") },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search query") },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedLabelColor = Color.White.copy(alpha = 0.7f),
+                        unfocusedLabelColor = Color.White.copy(alpha = 0.5f),
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text("Languages", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    languages.forEach { (code, name) ->
+                        FilterChip(
+                            selected = code in selectedLangs,
+                            onClick = {
+                                selectedLangs = if (code in selectedLangs) selectedLangs - code else selectedLangs + code
+                            },
+                            label = { Text(name, style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
+                if (state.searching) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text("Searching…", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                if (state.downloading) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        Text("Downloading…", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                state.error?.let { error ->
+                    Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                if (state.results.isNotEmpty()) {
+                    Text("Results", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f))
+                    state.results.take(15).forEach { result ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(enabled = !state.downloading) { onDownload(result) }
+                                .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    result.releaseName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    "${result.language.uppercase()} · ${result.downloadCount} downloads",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.6f),
+                                )
+                            }
+                            Icon(Icons.Rounded.CloudDownload, "Download", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
+                if (!state.searching && state.results.isEmpty() && state.error == null && state.query.isNotBlank()) {
+                    Text("No subtitles found. Try a different query.", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f))
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSearch(query.trim(), selectedLangs.joinToString(",")) },
+                enabled = query.isNotBlank() && selectedLangs.isNotEmpty() && !state.searching && !state.downloading,
+            ) { Text("Search") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } },
     )
 }
 

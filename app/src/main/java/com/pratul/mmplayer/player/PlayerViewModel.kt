@@ -36,6 +36,8 @@ import com.pratul.mmplayer.player.session.QueueBuilder
 import com.pratul.mmplayer.player.session.QueueEntry
 import com.pratul.mmplayer.player.service.NowPlaying
 import com.pratul.mmplayer.player.subtitles.ExternalSubtitles
+import com.pratul.mmplayer.player.subtitles.OpenSubtitlesClient
+import com.pratul.mmplayer.player.subtitles.SubtitleResult
 import com.pratul.mmplayer.player.subtitles.SubtitleSource
 import com.pratul.mmplayer.player.subtitles.SubtitleTrack
 import com.pratul.mmplayer.utils.formatDuration
@@ -92,6 +94,14 @@ data class SubtitleUiState(
     val loading: Boolean = false,
 )
 
+data class SubtitleSearchState(
+    val searching: Boolean = false,
+    val downloading: Boolean = false,
+    val results: List<SubtitleResult> = emptyList(),
+    val error: String? = null,
+    val query: String = "",
+)
+
 data class PlayerUiState(
     val player: Player? = null,
     val engine: Engine = Engine.EXO_HARDWARE_PLUS,
@@ -143,6 +153,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     /** Cues of the active external subtitle file (rendered by the screen, not by the engine). */
     private val _externalCues = MutableStateFlow<List<Cue>>(emptyList())
     val externalCues: StateFlow<List<Cue>> = _externalCues.asStateFlow()
+
+    private val _subtitleSearch = MutableStateFlow(SubtitleSearchState())
+    val subtitleSearch: StateFlow<SubtitleSearchState> = _subtitleSearch.asStateFlow()
 
     private var queue = PlaybackQueue(emptyList(), 0)
     private var currentIndex = 0
@@ -622,6 +635,59 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val timeUs = (player.currentPosition - _state.value.subtitles.delayMs) * 1000
         val cues = track.cuesAt(timeUs)
         if (cues != _externalCues.value) _externalCues.value = cues
+    }
+
+    // --- Online subtitle search (OpenSubtitles) -----------------------------------------------
+
+    fun defaultSubtitleQuery(): String {
+        val title = _state.value.file?.name ?: return ""
+        return title.substringBeforeLast('.').replace(Regex("[._\\[\\](){}]"), " ").trim()
+    }
+
+    fun searchOnlineSubtitles(query: String, languages: String = "en,hi") {
+        _subtitleSearch.value = SubtitleSearchState(searching = true, query = query)
+        viewModelScope.launch {
+            val file = _state.value.file
+            val hash = if (file != null && file.sizeBytes != null && file.sizeBytes > 0) {
+                withContext(Dispatchers.IO) {
+                    OpenSubtitlesClient.computeHash(getApplication(), file.uri, file.sizeBytes)
+                }
+            } else null
+            val result = withContext(Dispatchers.IO) {
+                runCatching { OpenSubtitlesClient.search(query, hash, languages) }
+            }
+            result.fold(
+                onSuccess = { results ->
+                    _subtitleSearch.update { it.copy(searching = false, results = results, error = null) }
+                },
+                onFailure = { e ->
+                    _subtitleSearch.update { it.copy(searching = false, error = e.message ?: "Search failed") }
+                },
+            )
+        }
+    }
+
+    fun downloadOnlineSubtitle(result: SubtitleResult) {
+        _subtitleSearch.update { it.copy(downloading = true, error = null) }
+        viewModelScope.launch {
+            val downloaded = withContext(Dispatchers.IO) {
+                runCatching { OpenSubtitlesClient.download(result.fileId, getApplication<Application>().cacheDir) }
+            }
+            downloaded.fold(
+                onSuccess = { file ->
+                    _subtitleSearch.update { it.copy(downloading = false) }
+                    selectSubtitleFile(Uri.fromFile(file))
+                    showMessage("Subtitles: ${result.releaseName}")
+                },
+                onFailure = { e ->
+                    _subtitleSearch.update { it.copy(downloading = false, error = e.message ?: "Download failed") }
+                },
+            )
+        }
+    }
+
+    fun clearSubtitleSearch() {
+        _subtitleSearch.value = SubtitleSearchState()
     }
 
     // --- Engine ------------------------------------------------------------------------------
