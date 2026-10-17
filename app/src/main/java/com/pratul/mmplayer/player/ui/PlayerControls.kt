@@ -1,5 +1,7 @@
 package com.pratul.mmplayer.player.ui
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.border
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -65,7 +67,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -82,8 +83,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import com.pratul.mmplayer.player.PlayerUiState
-import com.pratul.mmplayer.ui.theme.Aurora
-import com.pratul.mmplayer.ui.theme.glass
 import com.pratul.mmplayer.utils.formatDuration
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
@@ -102,8 +101,8 @@ class PlayerControlActions(
 )
 
 /**
- * The player's own controls (Media3's stock controller is turned off): a glass top bar, a glowing
- * centre transport, and a frosted bottom panel with a neon seek bar and labelled action chips.
+ * The player's own controls (Media3's stock controller is turned off), fully see-through: shadowed
+ * white symbols and text over the video, a thin white seek bar and labelled actions, no panels.
  */
 @Composable
 fun PlayerControls(
@@ -143,33 +142,29 @@ fun PlayerControls(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)))
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CircleControl(Icons.AutoMirrored.Rounded.ArrowBack, "Back", actions.onBack, size = 34)
-                Spacer(Modifier.width(12.dp))
+                CircleControl(Icons.AutoMirrored.Rounded.ArrowBack, "Back", actions.onBack, size = 44, iconSize = 24)
+                Spacer(Modifier.width(6.dp))
                 Text(
                     text = state.title.substringBeforeLast('.'),
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall.onVideo(),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
                     text = state.engine.badge,
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.onVideo(),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Aurora.gradient)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.6f), RoundedCornerShape(50))
+                        .padding(horizontal = 9.dp, vertical = 3.dp)
                         .semantics { contentDescription = "Decoder ${state.engine.badge}" },
                 )
-                Spacer(Modifier.width(8.dp))
-                CircleControl(Icons.Rounded.MoreVert, "More options", actions.onMore, size = 34)
+                Spacer(Modifier.width(2.dp))
+                CircleControl(Icons.Rounded.MoreVert, "More options", actions.onMore, size = 44, iconSize = 24)
             }
         }
 
@@ -181,7 +176,7 @@ fun PlayerControls(
             modifier = Modifier.align(Alignment.Center),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(28.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (state.queueSize > 1) {
@@ -194,26 +189,17 @@ fun PlayerControls(
                     actions.onInteraction()
                     player?.seekBack()
                 })
-                // Glowing play / pause.
-                Box(
-                    modifier = Modifier
-                        .size(58.dp)
-                        .shadow(18.dp, CircleShape, ambientColor = Aurora.accent, spotColor = Aurora.accentEnd)
-                        .clip(CircleShape)
-                        .background(Aurora.gradient)
-                        .clickable(role = Role.Button, onClickLabel = if (isPlaying) "Pause" else "Play") {
-                            actions.onInteraction()
-                            player?.let { it.playWhenReady = !it.playWhenReady }
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = if (isPlaying) "Pause" else "Play",
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
+                // Play / pause: just the symbol, larger than the others.
+                CircleControl(
+                    icon = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                    label = if (isPlaying) "Pause" else "Play",
+                    onClick = {
+                        actions.onInteraction()
+                        player?.let { it.playWhenReady = !it.playWhenReady }
+                    },
+                    size = 72,
+                    iconSize = 56,
+                )
                 CircleControl(Icons.Rounded.Forward10, "Fast forward", {
                     actions.onInteraction()
                     player?.seekForward()
@@ -237,22 +223,18 @@ fun PlayerControls(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f))))
                     .windowInsetsPadding(WindowInsets.safeDrawing)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .widthIn(max = 720.dp)
-                    .glass(RoundedCornerShape(20.dp))
-                    // Taps on the panel's background must not fall through and hide the controls.
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    // Taps around the bar must not fall through and hide the controls.
                     .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { actions.onInteraction() }
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(formatDuration(position), color = Color.White, style = MaterialTheme.typography.labelMedium)
+                    Text(formatDuration(position), style = MaterialTheme.typography.labelLarge.onVideo())
                     Spacer(Modifier.weight(1f))
                     Text(
                         text = if (showRemaining && duration > 0) "−${formatDuration(duration - position)}" else formatDuration(duration),
-                        color = Color.White.copy(alpha = 0.75f),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelLarge.onVideo(),
                         modifier = Modifier.clickable(role = Role.Button, onClickLabel = "Toggle remaining time") {
                             showRemaining = !showRemaining
                             actions.onInteraction()
@@ -275,7 +257,7 @@ fun PlayerControls(
                 Spacer(Modifier.height(5.dp))
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     ActionChip(Icons.Rounded.Lock, "Lock", actions.onLock)
                     ActionChip(Icons.Rounded.Speed, speedLabel, actions.onSpeed, highlighted = speedLabel != "1×")
@@ -294,49 +276,52 @@ fun PlayerControls(
     }
 }
 
+/** A see-through round button: a shadowed white symbol, with a full-size touch area around it. */
 @Composable
 private fun CircleControl(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-    size: Int = 40,
+    size: Int = 48,
     enabled: Boolean = true,
+    iconSize: Int = 30,
 ) {
     Box(
         modifier = Modifier
             .size(size.dp)
-            .glass(CircleShape)
+            .clip(CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClickLabel = label, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = icon,
+        ShadowIcon(
+            icon = icon,
             contentDescription = label,
+            size = iconSize.dp,
             tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
-            modifier = Modifier.size((size * 0.5f).dp),
         )
     }
 }
 
+/** A see-through action: icon and word only. When on, it gets a thin white outline. */
 @Composable
 private fun ActionChip(icon: ImageVector, label: String, onClick: () -> Unit, highlighted: Boolean = false) {
     Row(
         modifier = Modifier
-            .height(30.dp)
+            .height(32.dp)
             .clip(RoundedCornerShape(50))
-            .then(if (highlighted) Modifier.background(Aurora.gradient(0.85f)) else Modifier.background(Color.White.copy(alpha = 0.08f)))
+            .then(if (highlighted) Modifier.border(1.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(50)) else Modifier)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+        ShadowIcon(icon, contentDescription = null, size = 17.dp)
         Spacer(Modifier.width(5.dp))
-        Text(label, color = Color.White, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium.onVideo(), maxLines = 1)
     }
 }
 
 /**
- * Seek bar with a neon gradient fill, buffered track and a glowing thumb. Dragging shows the
+ * Thin white seek bar with a buffered track and a shadowed thumb. Dragging shows the
  * target time in a bubble and seeks when released; tapping jumps straight there.
  */
 @Composable
@@ -392,28 +377,25 @@ private fun NeonSeekBar(
         contentAlignment = Alignment.CenterStart,
     ) {
         val widthPx = with(density) { maxWidth.toPx() }
-        val seekColors = Aurora.colors
         Canvas(
             Modifier
                 .fillMaxWidth()
-                .height(if (dragging) 6.dp else 4.dp),
+                .height(if (dragging) 5.dp else 3.dp),
         ) {
             val radius = CornerRadius(size.height / 2, size.height / 2)
-            drawRoundRect(Color.White.copy(alpha = 0.18f), cornerRadius = radius)
-            drawRoundRect(Color.White.copy(alpha = 0.30f), size = Size(size.width * bufferedFraction, size.height), cornerRadius = radius)
-            drawRoundRect(
-                brush = Brush.horizontalGradient(seekColors),
-                size = Size(size.width * fraction, size.height),
-                cornerRadius = radius,
-            )
+            // A faint shadow line first, so the white bar shows on bright video too.
+            drawRoundRect(Color.Black.copy(alpha = 0.35f), topLeft = Offset(0f, 1.5f), cornerRadius = radius)
+            drawRoundRect(Color.White.copy(alpha = 0.30f), cornerRadius = radius)
+            drawRoundRect(Color.White.copy(alpha = 0.50f), size = Size(size.width * bufferedFraction, size.height), cornerRadius = radius)
+            drawRoundRect(Color.White, size = Size(size.width * fraction, size.height), cornerRadius = radius)
         }
-        // Thumb with a soft glow.
-        val thumb = if (dragging) 18.dp else 12.dp
+        // Plain white thumb with a small shadow.
+        val thumb = if (dragging) 18.dp else 13.dp
         Box(
             Modifier
                 .offset { IntOffset((widthPx * fraction - with(density) { thumb.toPx() } / 2).roundToInt(), 0) }
                 .size(thumb)
-                .shadow(12.dp, CircleShape, ambientColor = Aurora.accentEnd, spotColor = Aurora.accentEnd)
+                .shadow(3.dp, CircleShape)
                 .clip(CircleShape)
                 .background(Color.White),
         )
@@ -432,12 +414,9 @@ private fun NeonSeekBar(
         if (dragging && duration > 0) {
             Text(
                 text = formatDuration((dragFraction * duration).toLong()),
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium.onVideo(),
                 modifier = Modifier
                     .offset { IntOffset((widthPx * dragFraction).roundToInt() - 60, -96) }
-                    .clip(RoundedCornerShape(50))
-                    .background(Aurora.gradient)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }

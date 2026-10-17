@@ -3,6 +3,11 @@
 
 package com.pratul.mmplayer.player.ui
 
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Repeat
@@ -42,9 +47,6 @@ import com.pratul.mmplayer.player.SubtitleSearchState
 import com.pratul.mmplayer.player.SubtitleUiState
 import com.pratul.mmplayer.player.UpNext
 import com.pratul.mmplayer.player.subtitles.OpenSubtitlesClient
-import com.pratul.mmplayer.ui.theme.GlassButton
-import com.pratul.mmplayer.ui.theme.GlowButton
-import com.pratul.mmplayer.ui.theme.glass
 import android.util.TypedValue
 import android.view.HapticFeedbackConstants
 import android.view.View
@@ -124,7 +126,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -514,21 +515,19 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
         state.message?.let { message ->
             Text(
                 text = message,
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall.onVideo(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(top = 64.dp)
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(50))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
 
         if (!state.locked && !inPip) {
             PlayerControls(
-                // Hidden while the resume question is up, so nothing underneath can be tapped by mistake.
-                visible = controllerVisible && state.resumePrompt == null,
+                // Hidden while the resume question or the see-through options panel is up, so nothing overlaps.
+                visible = controllerVisible && state.resumePrompt == null && !showOptions,
                 state = state,
                 isPlaying = isPlaying,
                 speedLabel = formatSpeed(state.player?.playbackParameters?.speed ?: 1f),
@@ -607,22 +606,12 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
                             lockHint = false
                             controllerVisible = true
                         },
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(22.dp))
-                            .glass(RoundedCornerShape(22.dp)),
+                        modifier = Modifier.size(44.dp),
                     ) {
-                        Icon(Icons.Rounded.LockOpen, contentDescription = "Unlock controls", tint = Color.White, modifier = Modifier.size(20.dp))
+                        ShadowIcon(Icons.Rounded.LockOpen, contentDescription = "Unlock controls", size = 26.dp)
                     }
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Tap to unlock",
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier
-                            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(50))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                    )
+                    Spacer(Modifier.width(2.dp))
+                    Text("Tap to unlock", style = MaterialTheme.typography.labelLarge.onVideo())
                 }
             }
         }
@@ -718,23 +707,27 @@ fun PlayerScreen(viewModel: PlayerViewModel, host: PlayerHost, inPip: Boolean) {
 
 @Composable
 private fun FeedbackPill(feedback: Feedback, modifier: Modifier = Modifier) {
+    // No box: a shadowed symbol and text float on the video.
     Column(
-        modifier = modifier
-            .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
-            .glass(RoundedCornerShape(24.dp), strong = true)
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+        modifier = modifier.padding(horizontal = 20.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(feedback.icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+        ShadowIcon(feedback.icon, contentDescription = null, size = 36.dp)
         Spacer(Modifier.height(6.dp))
-        Text(feedback.text, color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Text(
+            feedback.text,
+            style = MaterialTheme.typography.titleLarge.onVideo().copy(fontWeight = FontWeight.Bold),
+            textAlign = TextAlign.Center,
+        )
         feedback.progress?.let { progress ->
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             LinearProgressIndicator(
                 progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier.width(140.dp),
+                modifier = Modifier
+                    .width(140.dp)
+                    .shadow(2.dp, RoundedCornerShape(50)),
                 color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.25f),
+                trackColor = Color.White.copy(alpha = 0.3f),
             )
         }
     }
@@ -771,21 +764,25 @@ private fun PlayerRightSidePanel(
     onAbRepeat: () -> Unit,
 ) {
     val player = state.player
+    // Fully see-through: no dimming and no panel; shadowed white text and outlined chips.
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clickable(onClick = onDismiss)
-            .background(Color.Black.copy(alpha = 0.45f)),
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss),
         contentAlignment = Alignment.CenterEnd,
     ) {
+        CompositionLocalProvider(
+            LocalContentColor provides Color.White,
+            LocalTextStyle provides MaterialTheme.typography.bodyMedium.onVideo(),
+        ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
                 .widthIn(max = 340.dp)
                 .fillMaxWidth(0.85f)
                 .clickable(enabled = false, onClick = {})
-                .background(Color(0xFF12121A).copy(alpha = 0.96f))
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(horizontal = 20.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -796,33 +793,32 @@ private fun PlayerRightSidePanel(
             ) {
                 Text(
                     "Options & Controls",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium.onVideo(),
                     fontWeight = FontWeight.Bold,
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+                    ShadowIcon(Icons.Rounded.Close, contentDescription = "Close", size = 24.dp)
                 }
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.4f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 IconButton(onClick = onTakeScreenshot) {
-                    Icon(Icons.Rounded.Camera, contentDescription = "Screenshot", tint = Color.White)
+                    ShadowIcon(Icons.Rounded.Camera, contentDescription = "Screenshot", size = 24.dp)
                 }
                 IconButton(onClick = onPip) {
-                    Icon(Icons.Rounded.PictureInPictureAlt, contentDescription = "PiP", tint = Color.White)
+                    ShadowIcon(Icons.Rounded.PictureInPictureAlt, contentDescription = "PiP", size = 24.dp)
                 }
                 IconButton(onClick = onInfo) {
-                    Icon(Icons.Rounded.Info, contentDescription = "Info", tint = Color.White)
+                    ShadowIcon(Icons.Rounded.Info, contentDescription = "Info", size = 24.dp)
                 }
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.4f))
 
             SheetTitle(
                 when {
@@ -832,16 +828,16 @@ private fun PlayerRightSidePanel(
                 },
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = sleep == null, onClick = onSleepCancel, label = { Text("Off") })
+                OverlayChip(selected = sleep == null, onClick = onSleepCancel, label = { Text("Off") })
                 SLEEP_MINUTES.forEach { minutes ->
-                    FilterChip(
+                    OverlayChip(
                         selected = false,
                         onClick = { onSleepMinutes(minutes) },
                         label = { Text(if (minutes < 60) "$minutes min" else "${minutes / 60} h${if (minutes % 60 > 0) " ${minutes % 60} min" else ""}") },
-                        leadingIcon = { Icon(Icons.Rounded.Bedtime, null, Modifier.size(16.dp)) },
+                        leadingIcon = { ShadowIcon(Icons.Rounded.Bedtime, null, 16.dp) },
                     )
                 }
-                FilterChip(
+                OverlayChip(
                     selected = sleep?.endOfItem == true,
                     onClick = onSleepEndOfItem,
                     label = { Text("End of this ${if (state.file?.mimeType?.startsWith("audio") == true) "track" else "video"}") },
@@ -851,21 +847,17 @@ private fun PlayerRightSidePanel(
             SheetTitle("Repeat")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 LoopMode.entries.forEach { mode ->
-                    FilterChip(
+                    OverlayChip(
                         selected = state.loopMode == mode,
                         onClick = { onLoop(mode) },
                         label = { Text(mode.label) },
                         leadingIcon = {
-                            Icon(
-                                if (mode == LoopMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
-                                null,
-                                Modifier.size(16.dp),
-                            )
+                            ShadowIcon(if (mode == LoopMode.ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat, null, 16.dp)
                         },
                     )
                 }
                 val ab = state.abRepeat
-                FilterChip(
+                OverlayChip(
                     selected = ab?.bMs != null,
                     onClick = onAbRepeat,
                     label = {
@@ -880,34 +872,34 @@ private fun PlayerRightSidePanel(
                 )
             }
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.4f))
 
             SheetTitle("Audio FX & Sound Profile")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AudioPreset.entries.forEach { preset ->
-                    FilterChip(
+                    OverlayChip(
                         selected = state.audioPreset == preset,
                         onClick = { onAudioPreset(preset) },
                         label = { Text(preset.label) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, null, Modifier.size(16.dp)) },
+                        leadingIcon = { ShadowIcon(Icons.AutoMirrored.Rounded.VolumeUp, null, 16.dp) },
                     )
                 }
             }
 
             SheetTitle("Bookmarks & Timestamps")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
+                OverlayChip(
                     selected = false,
                     onClick = onAddBookmark,
                     label = { Text("+ Add Bookmark") },
-                    leadingIcon = { Icon(Icons.Rounded.BookmarkAdd, null, Modifier.size(16.dp)) },
+                    leadingIcon = { ShadowIcon(Icons.Rounded.BookmarkAdd, null, 16.dp) },
                 )
                 state.bookmarks.forEach { bookmark ->
-                    FilterChip(
+                    OverlayChip(
                         selected = false,
                         onClick = { onSeekBookmark(bookmark) },
                         label = { Text(bookmark.label) },
-                        leadingIcon = { Icon(Icons.Rounded.Bookmark, null, Modifier.size(16.dp)) },
+                        leadingIcon = { ShadowIcon(Icons.Rounded.Bookmark, null, 16.dp) },
                     )
                 }
             }
@@ -917,7 +909,7 @@ private fun PlayerRightSidePanel(
                 SheetTitle("Audio Track")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     audioGroups.forEachIndexed { index, group ->
-                        FilterChip(
+                        OverlayChip(
                             selected = group.isSelected,
                             onClick = { player.selectTrack(group, C.TRACK_TYPE_AUDIO) },
                             label = { Text(trackLabel(group.getTrackFormat(0), index)) },
@@ -935,7 +927,7 @@ private fun PlayerRightSidePanel(
                         C.TRACK_TYPE_TEXT in player.trackSelectionParameters.disabledTrackTypes ||
                             textGroups.none { it.isSelected }
                         )
-                    FilterChip(
+                    OverlayChip(
                         selected = textOff,
                         onClick = {
                             onClearExternalSubtitle()
@@ -944,7 +936,7 @@ private fun PlayerRightSidePanel(
                         label = { Text("Off") },
                     )
                     textGroups.forEachIndexed { index, group ->
-                        FilterChip(
+                        OverlayChip(
                             selected = !externalActive && group.isSelected,
                             onClick = {
                                 onClearExternalSubtitle()
@@ -954,41 +946,40 @@ private fun PlayerRightSidePanel(
                         )
                     }
                     subtitles.files.forEach { file ->
-                        FilterChip(
+                        OverlayChip(
                             selected = subtitles.active == file.uri,
                             onClick = { onSelectSubtitleFile(file.uri) },
                             label = { Text(file.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            leadingIcon = { Icon(Icons.Rounded.Subtitles, null, Modifier.size(16.dp)) },
+                            leadingIcon = { ShadowIcon(Icons.Rounded.Subtitles, null, 16.dp) },
                         )
                     }
-                    FilterChip(
+                    OverlayChip(
                         selected = false,
                         onClick = onLoadSubtitleFile,
                         label = { Text("Load file…") },
-                        leadingIcon = { Icon(Icons.Rounded.FileOpen, null, Modifier.size(16.dp)) },
+                        leadingIcon = { ShadowIcon(Icons.Rounded.FileOpen, null, 16.dp) },
                     )
                     if (OpenSubtitlesClient.isAvailable) {
-                        FilterChip(
+                        OverlayChip(
                             selected = false,
                             onClick = onSearchOnline,
                             label = { Text("Search online…") },
-                            leadingIcon = { Icon(Icons.Rounded.TravelExplore, null, Modifier.size(16.dp)) },
+                            leadingIcon = { ShadowIcon(Icons.Rounded.TravelExplore, null, 16.dp) },
                         )
                     }
                 }
 
                 val canDelay = subtitles.active != null || state.engine == Engine.VLC
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Sync", style = MaterialTheme.typography.bodyMedium, color = Color.White, modifier = Modifier.width(48.dp))
-                    TextButton(onClick = { onSubtitleDelay(subtitles.delayMs - 100) }, enabled = canDelay) { Text("−0.1s") }
+                    Text("Sync", style = MaterialTheme.typography.bodyMedium.onVideo(), modifier = Modifier.width(48.dp))
+                    TextButton(onClick = { onSubtitleDelay(subtitles.delayMs - 100) }, enabled = canDelay) { Text("−0.1s", style = MaterialTheme.typography.labelLarge.onVideo()) }
                     Text(
                         text = formatDelay(subtitles.delayMs),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White,
+                        style = MaterialTheme.typography.titleSmall.onVideo(),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.width(60.dp),
                     )
-                    TextButton(onClick = { onSubtitleDelay(subtitles.delayMs + 100) }, enabled = canDelay) { Text("+0.1s") }
+                    TextButton(onClick = { onSubtitleDelay(subtitles.delayMs + 100) }, enabled = canDelay) { Text("+0.1s", style = MaterialTheme.typography.labelLarge.onVideo()) }
                 }
             }
 
@@ -996,7 +987,7 @@ private fun PlayerRightSidePanel(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val current = player?.playbackParameters?.speed ?: 1f
                 SPEEDS.forEach { speed ->
-                    FilterChip(
+                    OverlayChip(
                         selected = abs(current - speed) < 0.01f,
                         onClick = { onSpeed(speed) },
                         label = { Text(formatSpeed(speed)) },
@@ -1007,14 +998,14 @@ private fun PlayerRightSidePanel(
             SheetTitle("Aspect Ratio")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AspectRatioMode.entries.forEach { mode ->
-                    FilterChip(selected = state.aspectRatio == mode, onClick = { onAspect(mode) }, label = { Text(mode.label) })
+                    OverlayChip(selected = state.aspectRatio == mode, onClick = { onAspect(mode) }, label = { Text(mode.label) })
                 }
             }
 
             SheetTitle("Decoder")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Engine.entries.forEach { engine ->
-                    FilterChip(
+                    OverlayChip(
                         selected = state.engine == engine,
                         onClick = { onEngine(engine) },
                         label = { Text(engine.description) },
@@ -1024,17 +1015,18 @@ private fun PlayerRightSidePanel(
 
             SheetTitle("Screen Rotation")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !state.orientationLocked, onClick = { onOrientation(null) }, label = { Text("Default") })
-                FilterChip(selected = false, onClick = { onOrientation(OrientationMode.LANDSCAPE) }, label = { Text("Landscape") })
-                FilterChip(selected = false, onClick = { onOrientation(OrientationMode.PORTRAIT) }, label = { Text("Portrait") })
+                OverlayChip(selected = !state.orientationLocked, onClick = { onOrientation(null) }, label = { Text("Default") })
+                OverlayChip(selected = false, onClick = { onOrientation(OrientationMode.LANDSCAPE) }, label = { Text("Landscape") })
+                OverlayChip(selected = false, onClick = { onOrientation(OrientationMode.PORTRAIT) }, label = { Text("Portrait") })
             }
         }
     }
+        }
 }
 
 @Composable
 private fun SheetTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 10.dp))
+    Text(text, style = MaterialTheme.typography.titleSmall.onVideo(), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp))
 }
 
 @Composable
@@ -1406,18 +1398,16 @@ private fun ResumeCard(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 24.dp)
-            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(26.dp))
-            .glass(RoundedCornerShape(26.dp), strong = true)
             // Swallow taps between the buttons so they never reach the video underneath.
             .pointerInput(Unit) { detectTapGestures { } }
             .padding(horizontal = 20.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Continue watching from ${formatDuration(prompt.positionMs)}?", color = Color.White, style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GlassButton("Start over", onClick = onStartOver)
-            GlowButton("Continue (${prompt.secondsLeft})", onClick = onContinue, icon = Icons.Rounded.PlayArrow)
+        Text("Continue watching from ${formatDuration(prompt.positionMs)}?", style = MaterialTheme.typography.titleMedium.onVideo())
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OverlayButton("Start over", onClick = onStartOver)
+            OverlayButton("Continue (${prompt.secondsLeft})", onClick = onContinue, icon = Icons.Rounded.PlayArrow, primary = true)
         }
     }
 }
@@ -1434,20 +1424,17 @@ private fun UpNextCard(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(end = 24.dp, bottom = 96.dp)
             .width(300.dp)
-            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(26.dp))
-            .glass(RoundedCornerShape(26.dp), strong = true)
             .padding(16.dp),
     ) {
         Text(
             text = upNext.secondsLeft?.let { "Up next in $it" } ?: "Up next",
-            color = Color.White.copy(alpha = 0.75f),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.onVideo(Color.White.copy(alpha = 0.85f)),
         )
-        Text(upNext.title, color = Color.White, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(upNext.title, style = MaterialTheme.typography.titleMedium.onVideo(), maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GlassButton("Cancel", onClick = onCancel)
-            GlowButton("Play now", onClick = onPlay, icon = Icons.Rounded.SkipNext)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OverlayButton("Cancel", onClick = onCancel)
+            OverlayButton("Play now", onClick = onPlay, icon = Icons.Rounded.SkipNext, primary = true)
         }
     }
 }
